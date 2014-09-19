@@ -6,6 +6,7 @@
                    projectFiles="true">
       <itemPath>C:/Users/dparker/Documents/GitHub/ETM_MODULE_DEVELOPMENT/Module_development.X/Main.h</itemPath>
       <itemPath>C:/Users/dparker/Documents/GitHub/ETM_MODULE_DEVELOPMENT/Module_development.X/ETM_SCALE.h</itemPath>
+      <itemPath>C:/Users/dparker/Documents/GitHub/ETM_MODULE_DEVELOPMENT/Module_development.X/ETM_CAN_UTILITY.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -16,6 +17,7 @@
                    projectFiles="true">
       <itemPath>C:/Users/dparker/Documents/GitHub/ETM_MODULE_DEVELOPMENT/Module_development.X/Main.c</itemPath>
       <itemPath>C:/Users/dparker/Documents/GitHub/ETM_MODULE_DEVELOPMENT/Module_development.X/ETM_SCALE.s</itemPath>
+      <itemPath>C:/Users/dparker/Documents/GitHub/ETM_MODULE_DEVELOPMENT/Module_development.X/ETM_CAN_UTILITY.s</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

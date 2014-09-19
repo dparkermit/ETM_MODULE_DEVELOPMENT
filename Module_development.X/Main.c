@@ -1,6 +1,7 @@
 #include <p30F6014a.h>
 #include "Main.h"
 #include "ETM_SCALE.h"
+#include "ETM_CAN_UTILITY.h"
 
 _FOSC(ECIO & CSW_FSCM_OFF); 
 _FWDT(WDT_ON & WDTPSA_1 & WDTPSB_2); 
@@ -10,33 +11,53 @@ _FSS(WR_PROT_SEC_OFF & NO_SEC_CODE & NO_SEC_EEPROM & NO_SEC_RAM);
 _FGS(CODE_PROT_OFF);
 _FICD(PGD);
 
+
+unsigned int global_0;
+unsigned int global_1;
+unsigned int global_2;
+unsigned int global_3;
+unsigned int global_4;
+
+unsigned int slots_available;
+unsigned int slots_full;
+
+ETMCanMessage message_0;
+ETMCanMessage message_1;
+ETMCanMessage message_2;
+ETMCanMessage message_3;
+ETMCanMessage message_4;
+ETMCanMessage message_5;
+
+
+ETMCanMessage *can_message_ptr;
+
 int main(void) {
-  unsigned int cal_0;
-  unsigned int cal_1;
+  unsigned int local_0;
+  unsigned int local_1;
+  unsigned int n;
+
+
+
   
-  unsigned int scale_0;
-  unsigned int scale_1;
-
-  unsigned int result_0;
-  unsigned int result_1;
-
-  unsigned int error_count;
-
-  scale_0 = DEC_TO_SCALE_FACTOR(SCALE_FACTOR_0);
-  scale_1 = SCALE_INT_1;
-  cal_0 = DEC_TO_CAL_FACTOR(CALIBRATION_FACTOR_0);
-  cal_1 = DEC_TO_CAL_FACTOR(1.11231212);
+  global_0 = 0;
 
 
-  result_0 = 0x1100;
-  result_0 = EtmScaleFactor16(result_0, scale_0);
-  result_1 = 0x1100;
-  result_1 = EtmScaleFactor16(result_1, scale_1);
-  
-  error_count = saturation_etmscalefactor2_count + saturation_etmscalefactor16_count;
 
   while (1) {
-    
+
+    for (n =0; n<10; n++) {
+      ETMCan1RX0BufferAdd();
+      slots_available = ETMCan1RX0BufferSlotsAvailable();
+      slots_full = ETMCan1RX0BufferNotEmpty();
+      global_0 += 0x0100;
+    }
+
+    for (n =0; n<10; n++) {
+      ETMCan1RX0BufferReadData(&message_0);
+      slots_available = ETMCan1RX0BufferSlotsAvailable();
+      slots_full = ETMCan1RX0BufferNotEmpty();
+      global_0 += 0x0100;
+    }
   }
 }
 
