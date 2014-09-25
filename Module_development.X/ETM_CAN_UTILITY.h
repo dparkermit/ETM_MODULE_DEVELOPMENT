@@ -11,31 +11,41 @@ typedef struct {
 } ETMCanMessage;
 
 
+typedef struct {
+  unsigned int message_write_index;
+  unsigned int message_read_index;
+  ETMCanMessage message_data[16];
+} ETMCanMessageBuffer;
 
-void ETMCan1RX0BufferAdd();
+void ETMCanBufferAdd(ETMCanMessageBuffer* buffer_ptr, volatile unsigned int* data_ptr);
 /*
-  This stores the data in the next available buffer slot
-  If the buffer is full the data is discarded
-  If you don't want to discard data you need to check the status before calling this function
+  This stores the data selected by data_ptr (C1RX0SID,C1RX1SID,C2RX0SID,C2RX1SID) into the next available slot in the selected buffer.
+  If the buffer is full the data is discarded.
+  If you don't want to discard data you need to check the status before calling this function.
 */
 
-void ETMCan1RX0BufferReadData(ETMCanMessage* message);
+
+void ETMCanBufferRead(ETMCanMessageBuffer* buffer_ptr, ETMCanMessage* message_ptr);
 /*
-  This returns a copy of the oldest data in the buffer to the message
+  This stores a copy of the oldest data in the message_ptr location
   If the buffer is empty it returns the error identifier (0b0000111000000000) and fills the data with Zeros.
 */
 
-unsigned int ETMCan1RX0BufferNotEmpty();
+unsigned int ETMCanBufferRowsAvailable(ETMCanMessageBuffer* buffer_ptr);
 /*
-  Returns 0 if the buffer is empty.
-  If the buffer is not empty it returns the number of slots with data
+  This returns 0 if the buffer is full, otherwise returns the number of available rows
 */
 
-unsigned int ETMCan1RX0BufferNotFull();
+unsigned int ETMCanBufferNotEmpty(ETMCanMessageBuffer* buffer_ptr);
 /*
-  Returns 0 if the buffer is Full.
-  If the buffer is not full, it returns the number of empty slots
+  Returns 0 if the buffer is Empty, otherwise returns the number messages in the buffer
 */
+
+
+
+
+
+
 
 
 
@@ -53,8 +63,16 @@ unsigned int ETMCan1RX0BufferNotFull();
      This buffer is 32 (31 available) elements long (320 Bytes) (+ read/write pointers)
 
   
+     
+
+
   Functions
  
+  ETMCanBufferAdd(&buffer_ptr, &data_ptr)
+
+  &local_data_ptr = ETMCanBufferRead(&buffer_ptr)
+
+  Functions
 
   *** For the standard command ***
   ETMCanBufferAddCan1RX0
@@ -79,7 +97,6 @@ unsigned int ETMCan1RX0BufferNotFull();
   ETMCanLoggingBufferNotEmpty
   
   ETMCanLoggingBufferRead(ETMCanMessage* message)
-
 */
 
 

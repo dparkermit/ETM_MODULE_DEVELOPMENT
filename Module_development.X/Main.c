@@ -12,52 +12,46 @@ _FGS(CODE_PROT_OFF);
 _FICD(PGD);
 
 
-unsigned int global_0;
-unsigned int global_1;
-unsigned int global_2;
-unsigned int global_3;
-unsigned int global_4;
 
-unsigned int slots_available;
-unsigned int slots_full;
+ETMCanMessageBuffer test_dan_1;
 
-ETMCanMessage message_0;
-ETMCanMessage message_1;
-ETMCanMessage message_2;
-ETMCanMessage message_3;
-ETMCanMessage message_4;
-ETMCanMessage message_5;
+ETMCanMessage test_message;
 
+unsigned int global_0 = 0;
+unsigned int global_1 = 0;
 
-ETMCanMessage *can_message_ptr;
+unsigned int slots_available = 0;
+unsigned int rows_available = 0;
+unsigned int slots_full = 0;
+
 
 int main(void) {
-  unsigned int local_0;
-  unsigned int local_1;
   unsigned int n;
-
-
-
+  
+  
+  test_dan_1.message_write_index = 0;
+  test_dan_1.message_read_index = 0;
   
   global_0 = 0;
-
-
-
+  global_1 = 0;
+  
+  
+  for (n =0; n<20; n++) {
+    if (ETMCanBufferRowsAvailable(&test_dan_1)) {
+      ETMCanBufferAdd(&test_dan_1, &C2RX0SID);
+      global_0 += 1;
+    }
+  }
+  
+  for (n =0; n<20; n++) {
+    if (ETMCanBufferNotEmpty(&test_dan_1)) {
+      ETMCanBufferRead(&test_dan_1, &test_message);
+      global_1 += 1;
+    }
+  }
+  
   while (1) {
-
-    for (n =0; n<10; n++) {
-      ETMCan1RX0BufferAdd();
-      slots_available = ETMCan1RX0BufferSlotsAvailable();
-      slots_full = ETMCan1RX0BufferNotEmpty();
-      global_0 += 0x0100;
-    }
-
-    for (n =0; n<10; n++) {
-      ETMCan1RX0BufferReadData(&message_0);
-      slots_available = ETMCan1RX0BufferSlotsAvailable();
-      slots_full = ETMCan1RX0BufferNotEmpty();
-      global_0 += 0x0100;
-    }
+    
   }
 }
 
