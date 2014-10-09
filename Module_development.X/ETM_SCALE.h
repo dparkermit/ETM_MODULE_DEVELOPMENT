@@ -19,7 +19,7 @@ extern unsigned int saturation_etmscalefactor2_count;
 extern unsigned int saturation_etmscalefactor16_count;
 
 
-#define DEC_TO_SCALE_FACTOR(X)     (X*4096)
-#define DEC_TO_CAL_FACTOR(X)       (X*32768)
+#define DEC_TO_SCALE_FACTOR_16(X)     (X*4096)
+#define DEC_TO_CAL_FACTOR_2(X)       (X*32768)
 
 #endif

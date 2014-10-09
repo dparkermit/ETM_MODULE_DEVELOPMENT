@@ -17,24 +17,67 @@ typedef struct {
   ETMCanMessage message_data[16];
 } ETMCanMessageBuffer;
 
-void ETMCanBufferAdd(ETMCanMessageBuffer* buffer_ptr, volatile unsigned int* data_ptr);
+
+
+void ETMCanRXMessage(ETMCanMessage* message_ptr, volatile unsigned int* rx_register_address);
 /*
-  This stores the data selected by data_ptr (C1RX0SID,C1RX1SID,C2RX0SID,C2RX1SID) into the next available slot in the selected buffer.
-  If the buffer is full the data is discarded.
-  If you don't want to discard data you need to check the status before calling this function.
+  This stores the data selected by data_ptr (C1RX0CON,C1RX1CON,C2RX0CON,C2RX1CON) into the message
+  If there is no data RX Buffer then error information is placed into the message
+  This clears the RXFUL bit so that the buffer is available to receive another message
 */
 
 
-void ETMCanBufferRead(ETMCanMessageBuffer* buffer_ptr, ETMCanMessage* message_ptr);
+void ETMCanRXMessageBuffer(ETMCanMessageBuffer* buffer_ptr, volatile unsigned int* rx_data_address);
 /*
-  This stores a copy of the oldest data in the message_ptr location
+  This stores the data selected by data_ptr (C1RX0CON,C1RX1CON,C2RX0CON,C2RX1CON) into the next available slot in the selected buffer.
+  If the message buffer is full the data in the RX buffer is discarded.
+  If the RX buffer is empty, nothing is added to the message buffer
+  This clears the RXFUL bit so that the buffer is available to receive another message
+*/
+
+
+void ETMCanTXMessage(ETMCanMessage* message_ptr, volatile unsigned int* tx_register_address);
+/*
+  This moves the message data to the TX register indicated by tx_register_address (C1TX0CON, C1TX1CON, C1TX2CON)
+  If the TX register is not empty, the data will be overwritten.
+  Also sets the transmit bit to queue transmission
+*/
+
+
+void ETMCanTXMessageBuffer(ETMCanMessageBuffer* buffer_ptr, volatile unsigned int* tx_register_address);
+/*
+  This moves the oldest message in the buffer to to the TX register indicated by tx_register_address (C1TX0CON, C1TX1CON, C1TX2CON)
+  If the TX register is not empty, no data will be transfered and the message buffer state will remain unchanged
+  If the message buffer is empty, no data will be transmited and no error will be generated
+  Also sets the transmit bit to queue transmission
+*/
+
+
+void ETMCanAddMessageToBuffer(ETMCanMessageBuffer* buffer_ptr, ETMCanMessage* message_ptr);
+/*
+  This adds a message to the buffer
+  If the buffer is full the data is discarded.
+*/
+
+
+void ETMCanReadMessageFromBuffer(ETMCanMessageBuffer* buffer_ptr, ETMCanMessage* message_ptr);
+/*
+  This moves the oldest message in the buffer to the message_ptr
   If the buffer is empty it returns the error identifier (0b0000111000000000) and fills the data with Zeros.
 */
+
+
+void ETMCanBufferInitialize(ETMCanMessageBuffer* buffer_ptr);
+/*
+  This initializes a can message buffer.
+*/
+
 
 unsigned int ETMCanBufferRowsAvailable(ETMCanMessageBuffer* buffer_ptr);
 /*
   This returns 0 if the buffer is full, otherwise returns the number of available rows
 */
+
 
 unsigned int ETMCanBufferNotEmpty(ETMCanMessageBuffer* buffer_ptr);
 /*
@@ -44,60 +87,6 @@ unsigned int ETMCanBufferNotEmpty(ETMCanMessageBuffer* buffer_ptr);
 
 
 
-
-
-
-
-
-
-/*
-  What functions do we need.
-
-  We need up to two buffers.
-  
-  * We need a buffer that stores standard commands (that can come in on CAN1 or CAN2, into a single buffer)
-     This buffer is 8 (7 available) elements long (80 Bytes) (+ read/write pointers)
-
-
-  * We need a buffer that stores data logging (that can come in on CAN1 or CAN2, into a single buffer)
-     This buffer is 32 (31 available) elements long (320 Bytes) (+ read/write pointers)
-
-  
-     
-
-
-  Functions
- 
-  ETMCanBufferAdd(&buffer_ptr, &data_ptr)
-
-  &local_data_ptr = ETMCanBufferRead(&buffer_ptr)
-
-  Functions
-
-  *** For the standard command ***
-  ETMCanBufferAddCan1RX0
-  ETMCanBufferAddCan1RX1
-  ETMCanBufferAddCan2RX0
-  ETMCanBufferAddCan2RX1
-
-  ETMCanBufferNotFull()
-  ETMCanBufferNotEmpty()
-
-  ETMCanBufferRead(ETMCanMessage* message)
-
-
-
-  *** For the Data Logging Commands ***
-  ETMCanLoggingBufferAddCan1RX0
-  ETMCanLoggingBufferAddCan1RX1
-  ETMCanLoggingBufferAddCan2RX0
-  ETMCanLoggingBufferAddCan2RX1
-
-  ETMCanLoggingBufferNotFull
-  ETMCanLoggingBufferNotEmpty
-  
-  ETMCanLoggingBufferRead(ETMCanMessage* message)
-*/
 
 
 #endif
