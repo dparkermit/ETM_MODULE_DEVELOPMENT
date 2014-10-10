@@ -1,8 +1,5 @@
 #include <p30Fxxxx.h>
 #include "ETM_CAN.h"
-#include "ETM_CAN_UTILITY.h"
-#include "ETM_CAN_CONFIG.h"
-
 
 ETMCanMessageBuffer etm_can_rx_message_buffer;
 ETMCanMessageBuffer etm_can_tx_message_buffer;
@@ -13,33 +10,270 @@ ETMCanMessageBuffer etm_can_rx_data_log_buffer;
 
 unsigned int etm_can_next_pulse_level;
 unsigned int etm_can_next_pulse_count;
+unsigned int etm_can_high_speed_data_logging_enabled;
+
+
+ETMCanErrorData etm_can_can1_errors;
+ETMCanSystemDebugData etm_can_system_debug_data;
+
+
+ETMCanStatusRegister etm_can_status_register;
+
+
+void ETMCanProcessCmd(void);
+
+void ETMCanSetValue(ETMCanMessage* message_ptr);
+void ETMCanSetValueCalibration(ETMCanMessage* message_ptr);
+
+
+
+#ifdef __MASTER_MODULE
+void ETMCanUpdateStatus(ETMCanMessage* message_ptr);
+#endif
+
+
+#ifndef __MASTER_MODULE
+void ETMCanExecuteCMD(ETMCanMessage* message_ptr);
+void ETMCanExecuteCMDDefault(ETMCanMessage* message_ptr);
+void ETMCanReturnValue(ETMCanMessage* message_ptr);
+void ETMCanReturnValueCalibration(ETMCanMessage* message_ptr);
+void ETMCanDoSync(ETMCanMessage* message_ptr);
+
+
+#endif
+
+
+
+void ETMCanProcessCmd(void) {
+  ETMCanMessage next_message;
+  while (ETMCanBufferNotEmpty(&etm_can_rx_message_buffer)) {
+    ETMCanReadMessageFromBuffer(&etm_can_rx_message_buffer, &next_message);
+    
+#ifdef __MASTER_MODULE
+    if ((next_message.identifier & ETM_CAN_CMD_MASTER_ADDR_MASK) == ETM_CAN_CMD_SET_2_RX) {
+      ETMCanSetValue(&next_message);      
+    } else if ((next_message.identifier & ETM_CAN_CMD_MASTER_ADDR_MASK) == ETM_CAN_CMD_STATUS_RX) {
+      ETMCanUpdateStatus(&next_message);
+    } else {
+      etm_can_can1_errors.unknown_command_identifier++;
+    } 
+#else
+    if (next_message.identifier == (ETM_CAN_CMD_CMD_RX | (ETM_CAN_MY_ADDRESS << 3))) {
+      ETMCanExecuteCMD(&next_message);      
+    } else if (next_message.identifier == (ETM_CAN_CMD_SET_1_RX | (ETM_CAN_MY_ADDRESS << 3))) {
+      ETMCanSetValue(&next_message);      
+    } else if (next_message.identifier == (ETM_CAN_CMD_REQUEST_RX | (ETM_CAN_MY_ADDRESS << 3))) {
+      ETMCanReturnValue(&next_message);
+    } else if ((next_message.identifier & ETM_CAN_CMD_SLAVE_ADDR_MASK) == (ETM_CAN_CMD_SET_3_RX | (ETM_CAN_MY_ADDRESS << 3))) {
+      ETMCanSetValue(&next_message);
+    } else {
+      etm_can_can1_errors.unknown_command_identifier++;
+    } 
+#endif
+
+  }
+}
 
 
 
 void ETMCanSetValue(ETMCanMessage* message_ptr) {
   unsigned int index_word;
   index_word = message_ptr->word3;
+
+  if ((index_word & 0xF000) != (ETM_CAN_MY_ADDRESS << 12)) {
+    // It was not addressed to this board
+    etm_can_can1_errors.set_value_not_addressed_to_this_board++;
+  } else if ((index_word & 0x0FFF) <= 0x00FF) {
+    // It is not a valid set Value ID
+    etm_can_can1_errors.set_value_index_not_valid++;
+  } else if ((index_word & 0x0FFF) <= 0x2FF) {
+    // It is a board specific set value
+    ETMCanSetValueBoardSpecific(message_ptr);
+  } else if ((index_word & 0x0FFF) <= 0x3FF) {
+    // It is a board specific defailt registers
+    // These are not implimented at this time because there are no default set values
+    etm_can_can1_errors.set_value_index_not_valid++;
+  } else if ((index_word & 0x0FFF) <= 0x4FF) {
+    ETMCanSetValueCalibration(message_ptr);
+  } else {
+    // It was not a set value index 
+    etm_can_can1_errors.set_value_index_not_valid++;
+  }
 }
+
+
+
+void ETMCanSetValueCalibration(ETMCanMessage* message_ptr) {
+  // Dparker impliment this
+}
+
+
 
 #ifdef __MASTER_MODULE
 void ETMCanUpdateStatus(ETMCanMessage* message_ptr) {
-  
-}
+  }
 #endif
 
+
+
+
 #ifndef __MASTER_MODULE
+
 void ETMCanExecuteCMD(ETMCanMessage* message_ptr) {
+  unsigned int index_word;
+  index_word = message_ptr->word3;
   
+  if ((index_word & 0xF000) != (ETM_CAN_MY_ADDRESS << 12)) {
+    etm_can_can1_errors.command_not_addressed_to_this_board++;
+    // It was not addressed to this board
+  } else if ((index_word & 0x0FFF) <= 0x007F) {
+    // It is a default command
+    ETMCanExecuteCMDDefault(message_ptr);
+  } else if ((index_word & 0x0FFF) <= 0x0FF) {
+    // It is a board specific command
+    ETMCanExecuteCMDBoardSpecific(message_ptr);
+  } else {
+    // It was not a command ID
+    etm_can_can1_errors.command_index_not_valid++;
+  }
+}
+
+
+void ETMCanExecuteCMDDefault(ETMCanMessage* message_ptr) {
+  unsigned int index_word;
+  index_word = message_ptr->word3;
+  index_word &= 0x0FFF;
+  
+  switch (index_word) {
+    
+  case ETM_CAN_REGISTER_DEFAULT_CMD_RESET_FAULTS:
+    ETMCanResetFaults();
+    break;
+    
+  case ETM_CAN_REGISTER_DEFAULT_CMD_RESET_MCU:
+    __asm__ ("Reset");
+    break;
+    
+  case ETM_CAN_REGISTER_DEFAULT_CMD_RESEND_CONFIG:
+    ETMCanLogConfig();
+    break;
+    
+  case ETM_CAN_REGISTER_DEFAULT_CMD_WRITE_EEPROM_PAGE:
+    // DPARKER implement this
+    break;
+ 
+  case ETM_CAN_REGISTER_DEFAULT_CMD_DISABLE_HIGH_SPEED_DATA_LOGGING:
+    etm_can_high_speed_data_logging_enabled = 0;
+    break;
+
+  case ETM_CAN_REGISTER_DEFAULT_CMD_ENABLE_HIGH_SPEED_DATA_LOGGING:
+    etm_can_high_speed_data_logging_enabled = 1;
+    break;
+   
+  default:
+    // The default command was not recognized 
+    etm_can_can1_errors.default_command_index_not_recognized++;
+    break;
+  }
+}
+
+
+
+void ETMCanReturnValue(ETMCanMessage* message_ptr) {
+  unsigned int index_word;
+  index_word = message_ptr->word3;
+  
+  if ((index_word & 0xF000) != (ETM_CAN_MY_ADDRESS << 12)) {
+    etm_can_can1_errors.return_value_not_addressed_to_this_board++;
+    // It was not addressed to this board
+  } else if ((index_word & 0x0FFF) <= 0x00FF) {
+    // It is not a valid return Value ID
+    etm_can_can1_errors.return_value_index_not_valid++;
+  } else if ((index_word & 0x0FFF) <= 0x2FF) {
+    // It is a board specific return value
+    ETMCanReturnValueBoardSpecific(message_ptr);
+  } else if ((index_word & 0x0FFF) <= 0x3FF) {
+    // It is a board specific default registers
+    // These are not implimented at this time because there are no default set values
+    etm_can_can1_errors.return_value_index_not_valid++;
+  } else if ((index_word & 0x0FFF) <= 0x4FF) {
+    ETMCanReturnValueCalibration(message_ptr);
+  } else {
+    // It was not a set value index 
+    etm_can_can1_errors.set_value_index_not_valid++;
+  }
+}
+
+
+void ETMCanReturnValueCalibration(ETMCanMessage* message_ptr) {
+  // DPARKER need to impliment calibration system
+}
+
+void ETMCanSendStatus(void) {
+  ETMCanMessage status_message;
+  status_message.identifier = ETM_CAN_CMD_STATUS_TX | (ETM_CAN_MY_ADDRESS << 3);
+  status_message.word0 = etm_can_status_register.status_word_0;
+  status_message.word1 = etm_can_status_register.status_word_1;
+  status_message.word2 = etm_can_status_register.data_word_A;
+  status_message.word3 = etm_can_status_register.data_word_B;
+  
+  ETMCanTXMessage(&status_message, &C1TX1CON);
+}
+
+
+void ETMCanDoSync(ETMCanMessage* message_ptr) {
+  // Sync data is available in C1RX0B1->C1RX0B4
+  // At this time all that happens is that the chip watchdog is reset
+  // DPARKER move to assembly and issure W0-W3, SR usage
+  ClrWdt();
 }
 #endif
+
+
+
 
 
 #ifndef __MASTER_MODULE
-void ETMCanReturnValue(ETMCanMessage* message_ptr) {
 
+void ETMCanLogData(unsigned char packet_id, unsigned int word0, unsigned int word1, unsigned int word2, unsigned int word3) {
+  ETMCanMessage log_message;
+
+  packet_id &= 0x000F;
+  packet_id |= (ETM_CAN_MY_ADDRESS << 4);
+  packet_id |= 0b00000110000000000;
+  packet_id <<= 2;
+
+  log_message.identifier = (packet_id << 3);
+  log_message.identifier &= 0xFF00;
+  log_message.identifier |= (packet_id & 0x00FF);
+  
+  log_message.word0 = word0;
+  log_message.word1 = word1;
+  log_message.word2 = word2;
+  log_message.word3 = word3;
+  
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &log_message);
 }
-#endif
 
+void ETMCanLogDefaultDebug(void) {
+  // Sends the debug information up as log data
+  ETMCanLogData(0, etm_can_system_debug_data.i2c_bus_error_count, etm_can_system_debug_data.spi_bus_error_count, etm_can_system_debug_data.can_bus_error_count, etm_can_system_debug_data.scale_error_count);
+  ETMCanLogData(1, etm_can_system_debug_data.reset_count, etm_can_system_debug_data.self_test_result_register, etm_can_system_debug_data.debug_0, etm_can_system_debug_data.debug_1);
+  ETMCanLogData(2, etm_can_system_debug_data.debug_2, etm_can_system_debug_data.debug_3, etm_can_system_debug_data.debug_4, etm_can_system_debug_data.debug_5);
+  ETMCanLogData(3, etm_can_system_debug_data.debug_6, etm_can_system_debug_data.debug_7, etm_can_system_debug_data.debug_8, etm_can_system_debug_data.debug_9);
+}
+
+
+void ETMCanLogConfig(void) {
+  // Sends the processor configuration up as log data
+  ETMCanLogData(4, 0x0000, 0x0001, 0x0002, 0x0003);
+  ETMCanLogData(5, 0x0010, 0x0011, 0x0012, 0x0013);
+  ETMCanLogData(6, 0x0100, 0x0101, 0x0102, 0x0103);
+  // DPARKER need to impliment to actual configuration data
+}
+
+
+#endif
 
 
 
@@ -81,9 +315,6 @@ void ETMCanInitialize(void) {
   C1RXM1SID = ETM_CAN_SLAVE_RX1_MASK;
 #endif
 
-  //C1RXM0SID = 0; // DPARKER testing receive all
-  //C1RXM1SID = 0xFFFF; // DPARKER testing receive all
-  
   // Load Filter registers
   C1RXF0SID = ETM_CAN_CMD_LVL_FILTER;
   C1RXF3SID = ETM_CAN_CMD_ERROR_RX;
@@ -118,56 +349,19 @@ void ETMCanInitialize(void) {
   while(C1CTRLbits.OPMODE != 2);
   
   // Enable Can interrupt
-  //_C1IE = 1; //DPARKER
+  _C1IE = 1;
 }
 
 
 
 
 
-void ETMCanDoSync(void) {
-  // Sync data is available in C1RX0B1->C1RX0B4
-  // At this time all that happens is that the chip watchdog is reset
-}
-
-
-
-
-void ETMCanProcessCmd(void) {
-  ETMCanMessage next_message;
-  while (ETMCanBufferNotEmpty(&etm_can_rx_message_buffer)) {
-    
-    ETMCanReadMessageFromBuffer(&etm_can_rx_message_buffer, &next_message);
-    
-#ifdef __MASTER_MODULE
-    if ((next_message.identifier & ETM_CAN_SET_2_MASK) == ETM_CAN_CMD_SET_2) {
-      ETMCanSetValue(&next_message);      
-    } else if ((next_message.identifier & ETM_CAN_STATUS_MASK) == ETM_CAN_CMD_STATUS) {
-      ETMCanUpdateStatus(&next_message);
-    } else {
-      // DPARKER there was an unrecognized command.  Update some error counter
-    } 
-#else
-    if (next_message.identifier == (ETM_CAN_CMD_CMD_TX | (ETM_CAN_MY_ADDRESS << 3))) {
-      ETMCanExecuteCMD(&next_message);      
-    } else if (next_message.identifier == (ETM_CAN_CMD_SET_1_TX | (ETM_CAN_MY_ADDRESS << 3))) {
-      ETMCanSetValue(&next_message);      
-    } else if (next_message.identifier == (ETM_CAN_CMD_REQUEST_TX | (ETM_CAN_MY_ADDRESS << 3))) {
-      ETMCanReturnValue(&next_message);
-    } else if ((next_message.identifier & ETM_CAN_CMD_SET_3_RX_MASK) == (ETM_CAN_CMD_SET_3_RX | (ETM_CAN_MY_ADDRESS << 3))) {
-      ETMCanSetValue(&next_message);
-    } else {
-      // DPARKER there was an unrecognized command.  Update some error counter
-    } 
-#endif
-
-  }
-}
 
 
 void __attribute__((interrupt, no_auto_psv)) _C1Interrupt(void) {
-  _C1IF = 0;
+  ETMCanMessage can_message;
   
+  _C1IF = 0;
   
   if(C1RX0CONbits.RXFUL) {
     /*
@@ -176,21 +370,19 @@ void __attribute__((interrupt, no_auto_psv)) _C1Interrupt(void) {
     if (C1RX0CONbits.FILHIT0) {
       // The command was received by Filter 0
       // It is a Next Pulse Level Command
-      
+      ETMCanRXMessage(&can_message, &C1RX0CON);
       // DPARKER set next pulse level to data
-      etm_can_next_pulse_level = C1RX0B1;
-      etm_can_next_pulse_count = C1RX0B2;
-      C1RX0CONbits.RXFUL = 0; // Indicate that the buffer is now free
+      etm_can_next_pulse_level = can_message.word2;
+      etm_can_next_pulse_count = can_message.word3;
     } else {
       // The commmand was received by Filter 1
 #ifdef __MASTER_MODULE
       // The command is a data log.  Add it to the data log buffer
-      ETMCanRXMessageBuffer(&etm_can_rx_data_log_buffer, &C1RX0SID);
+      ETMCanRXMessageBuffer(&etm_can_rx_data_log_buffer, &C1RX0CON);
 #else
       // The command is a sync command.
-      ETMCanDoSync();
-      C1RX0CONbits.RXFUL = 0; // Indicate that the buffer is now free
-      // DPARKER figure out how this works
+      ETMCanRXMessage(&can_message, &C1RX0CON);
+      ETMCanDoSync(&can_message);
 #endif
     }
     C1INTFbits.RX0IF = 0; // Clear the Interuppt Status bit
@@ -202,9 +394,8 @@ void __attribute__((interrupt, no_auto_psv)) _C1Interrupt(void) {
        A message has been recieved in Buffer 1
        This command gets pushed onto the command message buffer
     */
-    ETMCanRXMessageBuffer(&etm_can_rx_message_buffer, &C1RX1SID); 
+    ETMCanRXMessageBuffer(&etm_can_rx_message_buffer, &C1RX1CON); 
     C1INTFbits.RX1IF = 0; // Clear the Interuppt Status bit
-    C1RX1CONbits.RXFUL = 0; // Indicate that the buffer is now free
   }
   
   
@@ -213,11 +404,10 @@ void __attribute__((interrupt, no_auto_psv)) _C1Interrupt(void) {
       TX0 is empty and there is a message waiting in the transmit message buffer
       Load the next message into TX0
     */
-    ETMCanTXMessageBuffer(&etm_can_tx_message_buffer, &C1TX0SID);
+    ETMCanTXMessageBuffer(&etm_can_tx_message_buffer, &C1TX0CON);
     C1INTFbits.TX0IF = 0;
-    C1TX0CONbits.TXREQ = 1;
   }
-    
+  
   
   if (C1INTFbits.ERRIF) {
     // There was some sort of CAN Error

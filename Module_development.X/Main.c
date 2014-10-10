@@ -1,9 +1,7 @@
 #include <p30F6014a.h>
 #include <libpic30.h>
-#include "Main.h"
-#include "ETM_CAN_UTILITY.h"
+//#include "Main.h"
 #include "ETM_CAN.h"
-#include "ETM_CAN_CONFIG.h"
 
 _FOSC(ECIO & CSW_FSCM_OFF); 
 _FWDT(WDT_ON & WDTPSA_1 & WDTPSB_2); 
@@ -13,11 +11,8 @@ _FSS(WR_PROT_SEC_OFF & NO_SEC_CODE & NO_SEC_EEPROM & NO_SEC_RAM);
 _FGS(CODE_PROT_OFF);
 _FICD(PGD);
 
-extern ETMCanMessageBuffer etm_can_rx_message_buffer;
-extern ETMCanMessageBuffer etm_can_tx_message_buffer;
 
 
-ETMCanMessageBuffer test_dan_1;
 
 ETMCanMessage test_message;
 
@@ -33,18 +28,12 @@ unsigned int slots_full = 0;
 
 
 int main(void) {
-  unsigned int n;
-  
-  
-  test_dan_1.message_write_index = 0;
-  test_dan_1.message_read_index = 0;
   
   global_0 = 0;
   global_1 = 0;
   
   ETMCanInitialize();
-  global_0 = C1RXM0SID;
-  global_1 = C1RXM1SID;
+
   test_message.identifier = (ETM_CAN_CMD_SET_1_TX | (ETM_CAN_MY_ADDRESS << 3));
   test_message.word0 = 0;
   test_message.word1 = 1;
@@ -69,61 +58,57 @@ int main(void) {
 
   ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &test_message);
 
+
+
+  test_message.identifier = (ETM_CAN_CMD_LVL_TX | (ETM_CAN_MY_ADDRESS << 3));
+  test_message.word0 = 0x30;
+  test_message.word1 = 0x31;
+  test_message.word2 = 0x32;
+  test_message.word3 = 0x33;
+
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &test_message);
+
+
+  test_message.identifier = (ETM_CAN_CMD_SYNC_TX | (ETM_CAN_MY_ADDRESS << 3));
+  test_message.word0 = 0x40;
+  test_message.word1 = 0x41;
+  test_message.word2 = 0x42;
+  test_message.word3 = 0x43;
+
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &test_message);
+
+
+
+  test_message.identifier = (ETM_CAN_CMD_STATUS_TX | (ETM_CAN_MY_ADDRESS << 3));
+  test_message.word0 = 0x50;
+  test_message.word1 = 0x51;
+  test_message.word2 = 0x52;
+  test_message.word3 = 0x53;
+
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &test_message);
+
+
+  test_message.identifier = (ETM_CAN_CMD_SET_1_TX | (ETM_CAN_MY_ADDRESS << 3));
+  test_message.word0 = 0x60;
+  test_message.word1 = 0x61;
+  test_message.word2 = 0x62;
+  test_message.word3 = 0x63;
+
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &test_message);
+
+
+  test_message.identifier = (ETM_CAN_CMD_SET_1_TX | (ETM_CAN_MY_ADDRESS << 3));
+  test_message.word0 = 0x70;
+  test_message.word1 = 0x71;
+  test_message.word2 = 0x72;
+  test_message.word3 = 0x73;
+
+  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &test_message);
+
+  _C1IF = 1;
+
   global_0 = 0;
 
-  ETMCanReadMessageFromBuffer(&etm_can_tx_message_buffer, &test_read_message);
-  global_1 = ETMCanBufferRowsAvailable(&etm_can_tx_message_buffer);
-  global_2 = ETMCanBufferNotEmpty(&etm_can_tx_message_buffer);
-  global_0 = 0;
-
-  ETMCanReadMessageFromBuffer(&etm_can_tx_message_buffer, &test_read_message);
-  global_1 = ETMCanBufferRowsAvailable(&etm_can_tx_message_buffer);
-  global_2 = ETMCanBufferNotEmpty(&etm_can_tx_message_buffer);
-  global_0 = 0;
-
-  ETMCanReadMessageFromBuffer(&etm_can_tx_message_buffer, &test_read_message);
-  global_1 = ETMCanBufferRowsAvailable(&etm_can_tx_message_buffer);
-  global_2 = ETMCanBufferNotEmpty(&etm_can_tx_message_buffer);
-  global_0 = 0;
-
-  ETMCanReadMessageFromBuffer(&etm_can_tx_message_buffer, &test_read_message);
-  global_1 = ETMCanBufferRowsAvailable(&etm_can_tx_message_buffer);
-  global_2 = ETMCanBufferNotEmpty(&etm_can_tx_message_buffer);
-  global_0 = 0;
-
-  ETMCanReadMessageFromBuffer(&etm_can_tx_message_buffer, &test_read_message);
-  global_1 = ETMCanBufferRowsAvailable(&etm_can_tx_message_buffer);
-  global_2 = ETMCanBufferNotEmpty(&etm_can_tx_message_buffer);
-  global_0 = 0;
-
-  ETMCanReadMessageFromBuffer(&etm_can_tx_message_buffer, &test_read_message);
-  global_1 = ETMCanBufferRowsAvailable(&etm_can_tx_message_buffer);
-  global_2 = ETMCanBufferNotEmpty(&etm_can_tx_message_buffer);
-  global_0 = 0;
-
-  
-  for (n =0; n<20; n++) {
-    test_message.identifier = n;
-    test_message.word0 = 0;
-    test_message.word1 = 1;
-    test_message.word2 = 2;
-    test_message.word3 = 3;
-
-    if (ETMCanBufferRowsAvailable(&test_dan_1)) {
-      ETMCanAddMessageToBuffer(&test_dan_1, &test_message);
-      global_1 = ETMCanBufferRowsAvailable(&test_dan_1);
-      global_2 = ETMCanBufferNotEmpty(&test_dan_1);
-    }
-    global_0 += 1;
-  }
-  
-  for (n =0; n<20; n++) {
-    if (ETMCanBufferNotEmpty(&test_dan_1)) {
-      ETMCanReadMessageFromBuffer(&test_dan_1, &test_message);
-      global_1 += 1;
-    }
-  }
-  
   while (1) {
     
   }

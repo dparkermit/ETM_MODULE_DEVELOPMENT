@@ -9,6 +9,8 @@
 
 #define ETM_CAN_INTERRUPT_PRIORITY          4
 
+//#define __MASTER_MODULE
+
 #endif
 
 

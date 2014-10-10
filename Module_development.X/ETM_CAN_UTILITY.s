@@ -61,7 +61,7 @@ _ETMCanRXMessageBuffer:
 	;; Calculate where the data should be added
 	MOV		[W0], W2
 	MUL.UU 		W2,#10,W2 ; W2 is now the offset based on write index 
-	ADD		W0,#4, W3 ; Move Start of data to W4
+	ADD		W0,#4, W3 ; Move Start of data to W3
 	ADD		W3,W2,W3 ; W3 is now the start address for this data row 
 
 	;; Copy the data from the SFRs to the data buffer
@@ -171,7 +171,7 @@ _ETMCanAddMessageToBuffer:
 	;; Calculate where the data should be added
 	MOV		[W0], W2
 	MUL.UU 		W2,#10,W2 ; W2 is now the offset based on write index 
-	ADD		W0,#4, W3 ; Move Start of data to W4
+	ADD		W0,#4, W3 ; Move Start of data to W3
 	ADD		W3,W2,W3 ; W3 is now the start address for this data row 
 
 	;; Copy the data from the message to the data buffer
