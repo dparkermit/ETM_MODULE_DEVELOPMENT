@@ -70,15 +70,24 @@
 
 
 // Can configuration parameters
-#define CXCTRL_CONFIG_MODE_VALUE                 0b0000010000000000      // This sets Fcan to 4xFcy
-#define CXCTRL_OPERATE_MODE_VALUE                0b0000000000000000      // This sets Fcan to 4xFcy
-#define CXCTRL_LOOPBACK_MODE_VALUE               0b0000001000000000      // This sets Fcan to 4xFcy
+//#define CXCTRL_CONFIG_MODE_VALUE                 0b0000010000000000      // This sets Fcan to 4xFcy
+//#define CXCTRL_OPERATE_MODE_VALUE                0b0000000000000000      // This sets Fcan to 4xFcy
+//#define CXCTRL_LOOPBACK_MODE_VALUE               0b0000001000000000      // This sets Fcan to 4xFcy
 
-#define CXCFG1_10MHZ_FCY_VALUE                   0b0000000000000001      // This sets TQ to 4/Fcan
+#define CXCTRL_CONFIG_MODE_VALUE                 0b0000110000000000      // This sets Fcan to 1xFcy
+#define CXCTRL_OPERATE_MODE_VALUE                0b0000100000000000      // This sets Fcan to 1xFcy
+#define CXCTRL_LOOPBACK_MODE_VALUE               0b0000101000000000      // This sets Fcan to 1xFcy
+
+#define CXCFG1_10MHZ_FCY_VALUE                   0b0000000000000100      // This sets TQ to 4/Fcan
+
+
+//#define CXCFG1_10MHZ_FCY_VALUE                   0b0000000000000001      // This sets TQ to 4/Fcan
 #define CXCFG1_20MHZ_FCY_VALUE                   0b0000000000000011      // This sets TQ to 8/Fcan
 #define CXCFG1_25MHZ_FCY_VALUE                   0b0000000000000100      // This sets TQ to 10/Fcan
 
-#define CXCFG2_VALUE                             0b0000001110010001      // This will created a bit timing of 10x TQ
+#define CXCFG2_VALUE                             0b0000010110100011      // This will created a bit timing of 12x TQ
+
+//#define CXCFG2_VALUE                             0b0000001110010001      // This will created a bit timing of 10x TQ
 
 #define CXTXXCON_VALUE_HIGH_PRIORITY             0b0000000000000011
 #define CXTXXCON_VALUE_MEDIUM_PRIORITY           0b0000000000000010
@@ -97,27 +106,6 @@ typedef struct {
   unsigned int data_word_A;
   unsigned int data_word_B;
 } ETMCanStatusRegister;
-
-
-
-typedef struct {
-  unsigned int unknown_message_identifier;
-  unsigned int message_index_does_not_match_board;
-  unsigned int message_not_addressed_to_this_board;
-  unsigned int module_error_flag;
-
-  unsigned int command_index_not_valid;
-  unsigned int default_command_index_not_recognized;
-  unsigned int board_specific_command_unknown;
-
-  unsigned int set_value_index_not_valid;
-  unsigned int board_specific_set_value_unknown;
-
-  unsigned int return_value_index_not_valid;
-  unsigned int board_specific_return_value_unknown;
-
-  unsigned int update_status_unknown_board;
-} ETMCanErrorData;
 
 
 typedef struct {
@@ -151,7 +139,233 @@ typedef struct {
   unsigned int debug_E;
   unsigned int debug_F;
   
+  unsigned int unknown_message_identifier;
+  unsigned int message_index_does_not_match_board;
+  unsigned int message_not_addressed_to_this_board;
+  unsigned int update_status_unknown_board;
+
+  unsigned int can_module_error_flag;
+  unsigned int command_index_not_valid;
+  unsigned int default_command_index_not_recognized;
+  unsigned int board_specific_command_unknown;
+
+  unsigned int set_value_index_not_valid;
+  unsigned int board_specific_set_value_unknown;
+  unsigned int return_value_index_not_valid;
+  unsigned int board_specific_return_value_unknown;
+
+  unsigned int can_commands_processed;
+
 } ETMCanSystemDebugData;
+
+
+
+typedef struct {
+  unsigned int pulse_count;
+  unsigned int high_low_energy;
+  
+  unsigned int hvlambda_readback_high_energy_lambda_program_voltage;
+  unsigned int hvlambda_readback_low_energy_lambda_program_voltage;
+  unsigned int hvlambda_readback_peak_lambda_voltage;
+
+  unsigned int afc_readback_current_position;
+  unsigned int afc_readback_target_position;
+  unsigned int afc_readback_a_input;
+  unsigned int afc_readback_b_input;
+  unsigned int afc_readback_filtered_error_reading;
+
+  unsigned int ionpump_readback_high_energy_target_current_reading;
+  unsigned int ionpump_readback_low_energy_target_current_reading;
+
+  unsigned int magmon_readback_magnetron_high_energy_current;
+  unsigned int magmon_readback_magnetron_low_energy_current;
+  unsigned int magmon_readback_arc_detected;
+
+  unsigned char psync_readback_customer_trigger_width;
+  unsigned char psync_readback_filtered_customer_trigger_width;
+  unsigned char psync_readback_high_energy_grid_width;
+  unsigned char psync_readback_high_energy_grid_delay;
+  unsigned char psync_readback_low_energy_grid_width;
+  unsigned char psync_readback_low_energy_grid_delay;
+  
+} ETMCanHighSpeedData;
+
+
+
+typedef struct {
+  // ------------------- HV LAMBDA BOARD --------------------- //
+  // Standard Registers for all Boards
+  ETMCanStatusRegister hvlamdba_status_data; 
+  ETMCanSystemDebugData hvlambda_debug_data;
+  
+  // Values that the Ethernet control board sets on HV Lambda
+  unsigned int hvlambda_high_energy_set_point;
+  unsigned int hvlambda_low_energy_set_point;
+
+  // "SLOW" Data that the Ethernet control board reads back from HV Lambda
+  unsigned int hvlambda_readback_high_energy_set_point;
+  unsigned int hvlambda_readback_low_energy_set_point;
+  unsigned int hvlambda_readback_base_plate_temp;
+
+
+
+
+  // ------------------- ION PUMP BOARD --------------------- //
+  // Standard Registers for all Boards
+  ETMCanStatusRegister ionpump_status_data; 
+  ETMCanSystemDebugData ionpump_debug_data;
+  
+  // Values that the Ethernet control board sets 
+  // NONE!!!!
+  
+  // "SLOW" Data that the Ethernet control board reads back
+  unsigned int ionpump_readback_ion_pump_volage_monitor;
+  unsigned int ionpump_readback_ion_pump_current_monitor;
+  unsigned int ionpump_readback_filtered_high_energy_target_current;
+  unsigned int ionpump_readback_filtered_low_energy_target_current;
+
+
+  // -------------------- AFC CONTROL BOARD ---------------//
+  // Standard Registers for all Boards
+  ETMCanStatusRegister afc_status_data; 
+  ETMCanSystemDebugData afc_debug_data;
+  
+  // Values that the Ethernet control board sets 
+  unsigned int afc_home_position;
+  int          afc_offset;
+    
+  // "SLOW" Data that the Ethernet control board reads back
+  unsigned int afc_readback_home_position;
+  unsigned int afc_readback_offset;
+  unsigned int afc_readback_current_position;
+
+  // -------------------- COOLING INTERFACE BOARD ---------------//
+  // Standard Registers for all Boards
+  ETMCanStatusRegister cool_status_data; 
+  ETMCanSystemDebugData cool_debug_data;
+  
+  // Values that the Ethernet control board sets 
+  // NONE!!!!
+    
+  // "SLOW" Data that the Ethernet control board reads back
+  unsigned int cool_readback_hvps_coolant_flow;
+  unsigned int cool_readback_magnetron_coolant_flow;
+  unsigned int cool_readback_linac_coolant_flow;
+  unsigned int cool_readback_circulator_coolant_flow;
+  unsigned int cool_readback_spare_word_0;
+  unsigned int cool_readback_spare_word_1;
+  unsigned int cool_readback_hx_coolant_flow;
+  unsigned int cool_readback_spare_coolant_flow;
+  unsigned int cool_readback_coolant_temperature;
+  unsigned int cool_readback_sf6_pressure;
+  unsigned int cool_readback_cabinet_temperature;
+  unsigned int cool_readback_linac_temperature;
+  
+  // -------------------- HEATER/MAGNET INTERFACE BOARD ---------------//
+  // Standard Registers for all Boards
+  ETMCanStatusRegister htrmag_status_data; 
+  ETMCanSystemDebugData htrmag_debug_data;
+  
+  // Values that the Ethernet control board sets 
+  unsigned int htrmag_magnet_current_set_point;
+  unsigned int htrmag_heater_current_set_point;
+      
+  // "SLOW" Data that the Ethernet control board reads back
+  unsigned int htrmag_readback_heater_current;
+  unsigned int htrmag_readback_heater_voltage;
+  unsigned int htrmag_readback_magnet_current;
+  unsigned int htrmag_readback_magnet_voltage;
+  unsigned int htrmag_readback_heater_current_set_point;
+  unsigned int htrmag_readback_heater_voltage_set_point;
+  unsigned int htrmag_readback_magnet_current_set_point;
+  unsigned int htrmag_readback_magnet_voltage_set_point;
+  
+  
+  // -------------------- GUN DRIVER INTERFACE BOARD ---------------//
+  // Standard Registers for all Boards
+  ETMCanStatusRegister gun_status_data; 
+  ETMCanSystemDebugData gun_debug_data;
+  
+  // Values that the Ethernet control board sets 
+  unsigned int gun_high_energy_pulse_top_voltage_set_point;
+  unsigned int gun_low_energy_pulse_top_voltage_set_point;
+  unsigned int gun_heater_voltage_set_point;
+  unsigned int gun_cathode_voltage_set_point;
+  
+  // "SLOW" Data that the Ethernet control board reads back
+  unsigned int gun_readback_high_energy_pulse_top_voltage_monitor;
+  unsigned int gun_readback_low_energy_pulse_top_voltage_monitor;
+  unsigned int gun_readback_cathode_voltage_monitor;
+  unsigned int gun_readback_peak_beam_current;
+  unsigned int gun_readback_heater_voltage_monitor;
+  unsigned int gun_readback_heater_current_monitor;
+  unsigned int gun_readback_heater_time_delay_remaining;
+  unsigned int gun_readback_driver_temperature;
+  unsigned int gun_readback_high_energy_pulse_top_set_point;
+  unsigned int gun_readback_low_energy_pulse_top_set_point;
+  unsigned int gun_readback_heater_voltage_set_point;
+  unsigned int gun_readback_cathode_voltage_set_point;
+
+
+  // -------------------- MAGNETRON CURRENT MONITOR BOARD ---------------//
+  // Standard Registers for all Boards
+  ETMCanStatusRegister magmon_status_data; 
+  ETMCanSystemDebugData magmon_debug_data;
+  
+  // Values that the Ethernet control board sets 
+  // NONE!!!!
+  
+  // "SLOW" Data that the Ethernet control board reads back
+  unsigned int magmon_readback_spare;
+  unsigned int magmon_readback_arcs_this_hv_on;
+  unsigned int magmon_filtered_high_energy_pulse_current;
+  unsigned int magmon_filtered_low_energy_pulse_current;
+  unsigned long magmon_arcs_lifetime;
+  unsigned long magmon_pulses_this_hv_on;
+  unsigned long long magmon_pulses_lifetime;
+
+  // -------------------- PULSE SYNC BOARD ---------------//
+  // Standard Registers for all Boards
+  ETMCanStatusRegister psync_status_data; 
+  ETMCanSystemDebugData psync_debug_data;
+  
+  // Values that the Ethernet control board sets 
+  unsigned char psync_grid_delay_high_intensity_3;
+  unsigned char psync_grid_delay_high_intensity_2;
+  unsigned char psync_grid_delay_high_intensity_1;
+  unsigned char psync_grid_delay_high_intensity_0;
+  unsigned char psync_pfn_delay_high;
+  unsigned char psync_rf_delay_high;
+
+  unsigned char psync_grid_width_high_intensity_3;
+  unsigned char psync_grid_width_high_intensity_2;
+  unsigned char psync_grid_width_high_intensity_1;
+  unsigned char psync_grid_width_high_intensity_0;
+  unsigned char psync_afc_delay_high;
+  unsigned char psync_spare_delay_high;
+
+  unsigned char psync_grid_delay_low_intensity_3;
+  unsigned char psync_grid_delay_low_intensity_2;
+  unsigned char psync_grid_delay_low_intensity_1;
+  unsigned char psync_grid_delay_low_intensity_0;
+  unsigned char psync_pfn_delay_low;
+  unsigned char psync_rf_delay_low;
+ 
+  unsigned char psync_grid_width_low_intensity_3;
+  unsigned char psync_grid_width_low_intensity_2;
+  unsigned char psync_grid_width_low_intensity_1;
+  unsigned char psync_grid_width_low_intensity_0;
+  unsigned char psync_afc_delay_low;
+  unsigned char psync_spare_delay_low;
+
+  unsigned int  psync_customer_led;
+
+  // "SLOW" Data that the Ethernet control board reads back
+  // NONE!!!!!!
+
+} ETMCanDataStructure;
+
+
 
 
 
@@ -166,12 +380,13 @@ extern ETMCanMessageBuffer etm_can_rx_data_log_buffer;
 // Public Variables
 extern unsigned int etm_can_next_pulse_level;
 extern unsigned int etm_can_next_pulse_count;
-#ifndef __ETM_CAN_MASTER_MODULE
+#ifdef __ETM_CAN_MASTER_MODULE
+extern ETMCanDataStructure etm_can_slave_data;
+#else
 extern unsigned int etm_can_high_speed_data_logging_enabled;
 #endif
 
 // Public Debug and Status registers
-extern ETMCanErrorData etm_can_can1_errors;
 extern ETMCanSystemDebugData etm_can_system_debug_data;
 extern ETMCanStatusRegister etm_can_status_register;
 
@@ -187,6 +402,7 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr);
 #else
 void ETMCanResetFaults(void);
 void ETMCanSendStatus(void);
+void ETMCanLogData(unsigned char packet_id, unsigned int word0, unsigned int word1, unsigned int word2, unsigned int word3);
 void ETMCanLogDefaultDebug(void);
 void ETMCanLogConfig(void);
 void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr);
@@ -206,7 +422,7 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 //------------------------------- P1298 Specific Board and Command Defines -------------------------- // 
 
 #define ETM_CAN_ADDR_ETHERNET_BOARD                                     14
-#define ETM_CAN_ADDR_IOP_PUMP_BOARD                                     1
+#define ETM_CAN_ADDR_ION_PUMP_BOARD                                     1
 #define ETM_CAN_ADDR_MAGNETRON_CURRENT_BOARD                            2
 #define ETM_CAN_ADDR_PULSE_SYNC_BOARD                                   3
 #define ETM_CAN_ADDR_HV_LAMBDA_BOARD                                    4
@@ -362,43 +578,43 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 #define ETM_CAN_DATA_LOG_REGISTER_DEFAULT_DEBUG_3                       0x5
 #define ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CONFIG_0                      0x6
 #define ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CONFIG_1                      0x7
-#define ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CAN_ERROR_0                   0xC
-#define ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CAN_ERROR_1                   0xD
-#define ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CAN_ERROR_2                   0xE
-#define ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CAN_ERROR_3                   0xF
+#define ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CAN_ERROR_0                   0x8
+#define ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CAN_ERROR_1                   0x9
+#define ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CAN_ERROR_2                   0xA
+#define ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CAN_ERROR_3                   0xB
 
 
 
 
-#define ETM_CAN_DATA_LOG_REGISTER_HV_LAMBDA_FAST_PROGRAM_VOLTAGE        0x48
-#define ETM_CAN_DATA_LOG_REGISTER_HV_LAMBDA_SLOW_SET_POINT              0x49
+#define ETM_CAN_DATA_LOG_REGISTER_HV_LAMBDA_FAST_PROGRAM_VOLTAGE        0x4C
+#define ETM_CAN_DATA_LOG_REGISTER_HV_LAMBDA_SLOW_SET_POINT              0x4D
 
-#define ETM_CAN_DATA_LOG_REGISTER_ION_PUMP_SLOW_MONITORS                0x48
+#define ETM_CAN_DATA_LOG_REGISTER_ION_PUMP_SLOW_MONITORS                0x4C
 
-#define ETM_CAN_DATA_LOG_REGISTER_AFC_FAST_POSITION                     0x58
-#define ETM_CAN_DATA_LOG_REGISTER_AFC_FAST_READINGS                     0x59
-#define ETM_CAN_DATA_LOG_REGISTER_AFC_SLOW_SETTINGS                     0x5A
+#define ETM_CAN_DATA_LOG_REGISTER_AFC_FAST_POSITION                     0x5C
+#define ETM_CAN_DATA_LOG_REGISTER_AFC_FAST_READINGS                     0x5D
+#define ETM_CAN_DATA_LOG_REGISTER_AFC_SLOW_SETTINGS                     0x5E
 
-#define ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_FAST_PREVIOUS_PULSE     0x28
-#define ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_SLOW_FILTERED_PULSE     0x29
-#define ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_SLOW_ARCS               0x2A
-#define ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_SLOW_PULSE_COUNT        0x2B
+#define ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_FAST_PREVIOUS_PULSE     0x2C
+#define ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_SLOW_FILTERED_PULSE     0x2D
+#define ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_SLOW_ARCS               0x2E
+#define ETM_CAN_DATA_LOG_REGISTER_MAGNETRON_MON_SLOW_PULSE_COUNT        0x2F
 
-#define ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_FLOW_0                   0x68
-#define ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_FLOW_1                   0x69
-#define ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_ANALOG_READINGS          0x6A
+#define ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_FLOW_0                   0x6C
+#define ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_FLOW_1                   0x6D
+#define ETM_CAN_DATA_LOG_REGISTER_COOLING_SLOW_ANALOG_READINGS          0x6E
 
-#define ETM_CAN_DATA_LOG_REGISTER_MAGNET_FILAMENT_SLOW_READINGS         0x78
-#define ETM_CAN_DATA_LOG_REGISTER_MAGNET_FILAMENT_SLOW_SET_POINTS       0x79
+#define ETM_CAN_DATA_LOG_REGISTER_MAGNET_FILAMENT_SLOW_READINGS         0x7C
+#define ETM_CAN_DATA_LOG_REGISTER_MAGNET_FILAMENT_SLOW_SET_POINTS       0x7D
 
-#define ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_SLOW_PULSE_TOP_MON         0x88
-#define ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_SLOW_HEATER_MON            0x89
-#define ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_SLOW_SET_POINTS            0x8A
+#define ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_SLOW_PULSE_TOP_MON         0x8C
+#define ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_SLOW_HEATER_MON            0x8D
+#define ETM_CAN_DATA_LOG_REGISTER_GUN_DRIVER_SLOW_SET_POINTS            0x8E
 
-#define ETM_CAN_DATA_LOG_REGISTER_PULSE_TOP_FAST_TRIGGER_DATA           0x38
-#define ETM_CAN_DATA_LOG_REGISTER_PULSE_TOP_SLOW_TIMING_DATA_0          0x39
-#define ETM_CAN_DATA_LOG_REGISTER_PULSE_TOP_SLOW_TIMING_DATA_1          0x3A
-#define ETM_CAN_DATA_LOG_REGISTER_PULSE_TOP_SLOW_TIMING_DATA_2          0x3B
+#define ETM_CAN_DATA_LOG_REGISTER_PULSE_TOP_FAST_TRIGGER_DATA           0x3C
+#define ETM_CAN_DATA_LOG_REGISTER_PULSE_TOP_SLOW_TIMING_DATA_0          0x3D
+#define ETM_CAN_DATA_LOG_REGISTER_PULSE_TOP_SLOW_TIMING_DATA_1          0x3E
+#define ETM_CAN_DATA_LOG_REGISTER_PULSE_TOP_SLOW_TIMING_DATA_2          0x3F
 
 
 #endif
