@@ -169,7 +169,7 @@ int main(void) {
   _LATG14 = 0;
   _TRISG14 = 0;
   
-
+  /*
 #ifdef __ETM_CAN_MASTER_MODULE
 
   test_message.identifier = (ETM_CAN_MSG_STATUS_TX | (ETM_CAN_ADDR_HV_LAMBDA_BOARD << 3));
@@ -193,10 +193,10 @@ int main(void) {
   test_message.word0 = 0x23;
   ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &test_message);
 
-  _C1IF = 1;
+  _C2IF = 1;
 
 #endif
-
+  */
   while (1) {
     if (_T2IF) {
       // should happen once a second
@@ -212,7 +212,7 @@ int main(void) {
       // Send Sync Command
       // DPARKER - Need to write send sync function
 
-      /*
+    
 
       // Send HV OFF Command (this will status register data word B to 0xFFFF)
       test_message.identifier = (ETM_CAN_MSG_DATA_LOG_TX | ((ETM_CAN_ADDR_HV_LAMBDA_BOARD) << 3));
@@ -231,22 +231,29 @@ int main(void) {
       ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &test_message);
       
 
-      _C1IF = 1;
-      */
+      _C2IF = 1;
+    
 #else
 
-      /*
+
       // The slave module needs to send out a status command and log data
       ETMCanSendStatus();
       
       // This will send out the first for log data commands
       ETMCanLogDefaultDebug();
+      //ETMCanLogData(0x2, 0, 1, 2, 3);
+      //ETMCanLogData(0x3, 4, 5, 6, 7);
 
-      */
+
 #endif
     }
     
     ETMCanProcessMessage();
+
+#ifdef __ETM_CAN_MASTER_MODULE
+    ETMCanProcessLogData();
+#endif
+
   }
 }
 

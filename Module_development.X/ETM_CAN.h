@@ -70,24 +70,23 @@
 
 
 // Can configuration parameters
-//#define CXCTRL_CONFIG_MODE_VALUE                 0b0000010000000000      // This sets Fcan to 4xFcy
-//#define CXCTRL_OPERATE_MODE_VALUE                0b0000000000000000      // This sets Fcan to 4xFcy
-//#define CXCTRL_LOOPBACK_MODE_VALUE               0b0000001000000000      // This sets Fcan to 4xFcy
+#define CXCTRL_CONFIG_MODE_VALUE                 0b0000010000000000      // This sets Fcan to 4xFcy
+#define CXCTRL_OPERATE_MODE_VALUE                0b0000000000000000      // This sets Fcan to 4xFcy
+#define CXCTRL_LOOPBACK_MODE_VALUE               0b0000001000000000      // This sets Fcan to 4xFcy
 
-#define CXCTRL_CONFIG_MODE_VALUE                 0b0000110000000000      // This sets Fcan to 1xFcy
-#define CXCTRL_OPERATE_MODE_VALUE                0b0000100000000000      // This sets Fcan to 1xFcy
-#define CXCTRL_LOOPBACK_MODE_VALUE               0b0000101000000000      // This sets Fcan to 1xFcy
+//#define CXCTRL_CONFIG_MODE_VALUE                 0b0000110000000000      // This sets Fcan to 1xFcy
+//#define CXCTRL_OPERATE_MODE_VALUE                0b0000100000000000      // This sets Fcan to 1xFcy
+//#define CXCTRL_LOOPBACK_MODE_VALUE               0b0000101000000000      // This sets Fcan to 1xFcy
+//#define CXCFG1_10MHZ_FCY_VALUE                   0b0000000000000100      // This sets TQ to 4/Fcan
 
-#define CXCFG1_10MHZ_FCY_VALUE                   0b0000000000000100      // This sets TQ to 4/Fcan
 
-
-//#define CXCFG1_10MHZ_FCY_VALUE                   0b0000000000000001      // This sets TQ to 4/Fcan
+#define CXCFG1_10MHZ_FCY_VALUE                   0b0000000000000001      // This sets TQ to 4/Fcan
 #define CXCFG1_20MHZ_FCY_VALUE                   0b0000000000000011      // This sets TQ to 8/Fcan
 #define CXCFG1_25MHZ_FCY_VALUE                   0b0000000000000100      // This sets TQ to 10/Fcan
 
-#define CXCFG2_VALUE                             0b0000010110100011      // This will created a bit timing of 12x TQ
+//#define CXCFG2_VALUE                             0b0000010110100011      // This will created a bit timing of 12x TQ
 
-//#define CXCFG2_VALUE                             0b0000001110010001      // This will created a bit timing of 10x TQ
+#define CXCFG2_VALUE                             0b0000001110010001      // This will created a bit timing of 10x TQ
 
 #define CXTXXCON_VALUE_HIGH_PRIORITY             0b0000000000000011
 #define CXTXXCON_VALUE_MEDIUM_PRIORITY           0b0000000000000010
@@ -155,6 +154,9 @@ typedef struct {
   unsigned int board_specific_return_value_unknown;
 
   unsigned int can_commands_processed;
+  unsigned int can_rx_0_count;
+  unsigned int can_rx_1_count;
+  unsigned int can_tx_0_count;
 
 } ETMCanSystemDebugData;
 
@@ -399,10 +401,11 @@ void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr);
 
 #ifdef __ETM_CAN_MASTER_MODULE
 void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr);
+void ETMCanProcessLogData(void);
 #else
 void ETMCanResetFaults(void);
 void ETMCanSendStatus(void);
-void ETMCanLogData(unsigned char packet_id, unsigned int word0, unsigned int word1, unsigned int word2, unsigned int word3);
+void ETMCanLogData(unsigned int packet_id, unsigned int word3, unsigned int word2, unsigned int word1, unsigned int word0);
 void ETMCanLogDefaultDebug(void);
 void ETMCanLogConfig(void);
 void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr);

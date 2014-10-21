@@ -46,7 +46,7 @@ void ETMCanProcessLogData(void) {
   unsigned int data_log_index;
   ETMCanSystemDebugData* debug_data_ptr; 
   while (ETMCanBufferNotEmpty(&etm_can_rx_data_log_buffer)) {
-    ETMCanReadMessageFromBuffer(&etm_can_rx_message_buffer, &next_message);
+    ETMCanReadMessageFromBuffer(&etm_can_rx_data_log_buffer, &next_message);
     data_log_index = next_message.identifier;
     data_log_index >>= 3;
     data_log_index &= 0x00FF;
@@ -153,6 +153,10 @@ void ETMCanProcessLogData(void) {
 
 	case ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CAN_ERROR_3:
 	  debug_data_ptr->can_commands_processed               = next_message.word3;
+	  debug_data_ptr->can_rx_0_count                       = next_message.word2;
+	  debug_data_ptr->can_rx_1_count                       = next_message.word1;
+	  debug_data_ptr->can_tx_0_count                       = next_message.word0;
+
 	  break;
 	  
 	} 
