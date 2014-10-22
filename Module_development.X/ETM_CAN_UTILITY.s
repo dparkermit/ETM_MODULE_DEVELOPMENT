@@ -49,6 +49,10 @@ _ETMCanRXMessageBuffer:
 	;; Confirm there is data in RX buffer
 	BTSS [W1], #7
 	BRA		_ETMCanRXMessageBuffer_RX_EMPTY
+
+	;; Increment message_write_count
+	ADD		W0, #4, W3
+	INC		[W3], [W3]
 	
 	;; Check to see if the message buffer is full
 	;; WO initial points to the write_index
@@ -61,7 +65,7 @@ _ETMCanRXMessageBuffer:
 	;; Calculate where the data should be added
 	MOV		[W0], W2
 	MUL.UU 		W2,#10,W2 ; W2 is now the offset based on write index 
-	ADD		W0,#4, W3 ; Move Start of data to W3
+	ADD		W0,#8, W3 ; Move Start of data to W3
 	ADD		W3,W2,W3 ; W3 is now the start address for this data row 
 
 	;; Copy the data from the SFRs to the data buffer
@@ -78,7 +82,15 @@ _ETMCanRXMessageBuffer:
 	AND		#buffer_length, W2 ; Wrap the write index
 	MOV		W2, [W0]
 
+	;; Decrement to the overwrite counter
+	ADD		W0, #6, W3
+	DEC		[W3], [W3]
+	
 _ETMCanRXMessageBuffer_BUFFER_FULL:	
+	;; Increment to the overwrite counter
+	ADD		W0, #6, W3
+	INC		[W3], [W3]
+
 	;; Clear the RX Buffer full status bit
 	BCLR           [W1],#7
 _ETMCanRXMessageBuffer_RX_EMPTY:	
@@ -160,6 +172,10 @@ RETURN
 	;; Address of the Message is in W1
 .text
 _ETMCanAddMessageToBuffer:
+	;; Increment message_write_count
+	ADD		W0, #4, W3
+	INC		[W3], [W3]
+	
 	;; Check to see if the message buffer is full
 	;; WO initial points to the write_index
 	MOV		[W0+0x2], W3 ; Move read index to W3
@@ -171,7 +187,7 @@ _ETMCanAddMessageToBuffer:
 	;; Calculate where the data should be added
 	MOV		[W0], W2
 	MUL.UU 		W2,#10,W2 ; W2 is now the offset based on write index 
-	ADD		W0,#4, W3 ; Move Start of data to W3
+	ADD		W0,#8, W3 ; Move Start of data to W3
 	ADD		W3,W2,W3 ; W3 is now the start address for this data row 
 
 	;; Copy the data from the message to the data buffer
@@ -186,7 +202,14 @@ _ETMCanAddMessageToBuffer:
 	AND		#buffer_length, W2 ; Wrap the write index
 	MOV		W2, [W0]
 
+	;; Decrement to the overwrite counter
+	ADD		W0, #6, W3
+	DEC		[W3], [W3]
+	
 _ETMCanAddMessageToBuffer_BUFFER_FULL:	
+	;; Increment to the overwrite counter
+	ADD		W0, #6, W3
+	INC		[W3], [W3]
 	
 RETURN
 
@@ -225,7 +248,7 @@ _ETMCanReadMessageFromBuffer_NOT_EMPTY:
 
 	;; First calculate the address for the data that we want
 	MUL.UU		W2, #10, W2
-	ADD		W2, #4, W2
+	ADD		W2, #8, W2
 	ADD 		W2, W0, W2 ;W2 is now the base address of the data that we want to copy
 
 	;; Copy the data from can message buffer to the message data
@@ -279,7 +302,7 @@ _ETMCanTXMessageBuffer:
 
 	;; First calculate the address for the data that we want
 	MUL.UU		W2, #10, W2
-	ADD		W2, #4, W2
+	ADD		W2, #8, W2
 	ADD 		W2, W0, W2 ;W2 is now the base address of the data that we want to copy
 
 	;; Copy the data from can message buffer to the TX buffer
@@ -348,6 +371,8 @@ RETURN
 _ETMCanBufferInitialize:
 	;; Initialize the buffer by setting read and write pointers to zero
 	CLR		[W0++]
-	CLR		[W0]
+	CLR		[W0++]
+	CLR		[W0++]
+	CLR		[W0]	
 Return
 	

@@ -240,6 +240,12 @@ int main(void) {
       ETMCanSendStatus();
       
       // This will send out the first for log data commands
+      
+      etm_can_system_debug_data.debug_0 = etm_can_tx_message_buffer.message_write_count;
+      etm_can_system_debug_data.debug_1 = etm_can_tx_message_buffer.message_overwrite_count;
+      etm_can_system_debug_data.debug_2 = etm_can_rx_message_buffer.message_write_count;
+      etm_can_system_debug_data.debug_3 = etm_can_rx_message_buffer.message_overwrite_count;
+
       ETMCanLogDefaultDebug();
       //ETMCanLogData(0x2, 0, 1, 2, 3);
       //ETMCanLogData(0x3, 4, 5, 6, 7);

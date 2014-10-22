@@ -14,6 +14,8 @@ typedef struct {
 typedef struct {
   unsigned int message_write_index;
   unsigned int message_read_index;
+  unsigned int message_write_count;
+  unsigned int message_overwrite_count;
   ETMCanMessage message_data[16];
 } ETMCanMessageBuffer;
 

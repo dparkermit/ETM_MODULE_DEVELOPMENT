@@ -21,7 +21,16 @@ void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr) {
 
 
 #ifdef __ETM_CAN_MASTER_MODULE
-ETMCanDataStructure etm_can_slave_data;
+ETMCanRamMirrorHVLambda          etm_can_hv_lamdba_mirror;
+ETMCanRamMirrorIonPump           etm_can_ion_pump_mirror;
+ETMCanRamMirrorAFC               etm_can_afc_mirror;
+ETMCanRamMirrorCooling           etm_can_cooling_mirror;
+ETMCanRamMirrorHeaterMagnet      etm_can_heater_magnet_mirror;
+ETMCanRamMirrorGunDriver         etm_can_gun_driver_mirror;
+ETMCanRamMirrorMagnetronCurrent  etm_can_magnetron_current_mirror;
+ETMCanRamMirrorPulseSync         etm_can_pulse_sync_mirror;
+
+
 ETMCanHighSpeedData etm_can_high_speed_data_test;
 
 void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
@@ -57,15 +66,15 @@ void ETMCanProcessLogData(void) {
       switch (data_log_index >> 4) 
 	{
 	case ETM_CAN_ADDR_ION_PUMP_BOARD:
-	  debug_data_ptr = &etm_can_slave_data.ionpump_debug_data;
+	  debug_data_ptr = &etm_can_ion_pump_mirror.debug_data;
 	  break;
 	  
 	case ETM_CAN_ADDR_MAGNETRON_CURRENT_BOARD:
-	  debug_data_ptr = &etm_can_slave_data.magmon_debug_data;
+	  debug_data_ptr = &etm_can_magnetron_current_mirror.debug_data;
 	  break;
 	  
 	case ETM_CAN_ADDR_HV_LAMBDA_BOARD:
-	  debug_data_ptr = &etm_can_slave_data.hvlambda_debug_data;
+	  debug_data_ptr = &etm_can_hv_lamdba_mirror.debug_data;
 	  break;
 	  
 	  
@@ -173,9 +182,9 @@ void ETMCanProcessLogData(void) {
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_HV_LAMBDA_SLOW_SET_POINT:
-	  etm_can_slave_data.hvlambda_readback_high_energy_set_point = next_message.word2;
-	  etm_can_slave_data.hvlambda_readback_low_energy_set_point = next_message.word1;
-	  etm_can_slave_data.hvlambda_readback_base_plate_temp = next_message.word0;
+	  etm_can_hv_lamdba_mirror.hvlambda_readback_high_energy_set_point = next_message.word2;
+	  etm_can_hv_lamdba_mirror.hvlambda_readback_low_energy_set_point = next_message.word1;
+	  etm_can_hv_lamdba_mirror.hvlambda_readback_base_plate_temp = next_message.word0;
 	  break;
 
 
