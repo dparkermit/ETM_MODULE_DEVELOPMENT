@@ -13,7 +13,7 @@ void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr) {
     break;
 
   default:
-    etm_can_system_debug_data.board_specific_set_value_unknown++;
+    etm_can_can_status.can_status_invalid_index++;
     break;
   }
 }
@@ -41,9 +41,25 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
     /*
       Place all board specific status updates here
     */
+
+  case ETM_CAN_ADDR_ION_PUMP_BOARD:
+    etm_can_ion_pump_mirror.status_data.status_word_0 = message_ptr->word0;
+    etm_can_ion_pump_mirror.status_data.status_word_1 = message_ptr->word1;
+    etm_can_ion_pump_mirror.status_data.data_word_A   = message_ptr->word2;
+    etm_can_ion_pump_mirror.status_data.data_word_B   = message_ptr->word3;
+    break;
   
+  case ETM_CAN_ADDR_HV_LAMBDA_BOARD:
+    etm_can_hv_lamdba_mirror.status_data.status_word_0 = message_ptr->word0;
+    etm_can_hv_lamdba_mirror.status_data.status_word_1 = message_ptr->word1;
+    etm_can_hv_lamdba_mirror.status_data.data_word_A   = message_ptr->word2;
+    etm_can_hv_lamdba_mirror.status_data.data_word_B   = message_ptr->word3;
+    break;
+
+    // DPARKER add in all the other boards
+
   default:
-    etm_can_system_debug_data.update_status_unknown_board++;
+    etm_can_can_status.can_status_address_error++;
     break;
 
   }
@@ -51,9 +67,12 @@ void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr) {
 
 
 void ETMCanProcessLogData(void) {
-  ETMCanMessage next_message;
-  unsigned int data_log_index;
-  ETMCanSystemDebugData* debug_data_ptr; 
+  ETMCanMessage          next_message;
+  unsigned int           data_log_index;
+  ETMCanSystemDebugData* debug_data_ptr;
+  ETMCanAgileConfig*     config_data_ptr;
+  ETMCanCanStatus*       can_status_ptr;
+
   while (ETMCanBufferNotEmpty(&etm_can_rx_data_log_buffer)) {
     ETMCanReadMessageFromBuffer(&etm_can_rx_data_log_buffer, &next_message);
     data_log_index = next_message.identifier;
@@ -66,15 +85,21 @@ void ETMCanProcessLogData(void) {
       switch (data_log_index >> 4) 
 	{
 	case ETM_CAN_ADDR_ION_PUMP_BOARD:
-	  debug_data_ptr = &etm_can_ion_pump_mirror.debug_data;
+	  debug_data_ptr  = &etm_can_ion_pump_mirror.debug_data;
+	  config_data_ptr = &etm_can_ion_pump_mirror.configuration;
+	  can_status_ptr  = &etm_can_ion_pump_mirror.can_status;
 	  break;
 	  
 	case ETM_CAN_ADDR_MAGNETRON_CURRENT_BOARD:
-	  debug_data_ptr = &etm_can_magnetron_current_mirror.debug_data;
+	  debug_data_ptr  = &etm_can_magnetron_current_mirror.debug_data;
+	  config_data_ptr = &etm_can_magnetron_current_mirror.configuration;
+	  can_status_ptr  = &etm_can_magnetron_current_mirror.can_status;
 	  break;
 	  
 	case ETM_CAN_ADDR_HV_LAMBDA_BOARD:
-	  debug_data_ptr = &etm_can_hv_lamdba_mirror.debug_data;
+	  debug_data_ptr  = &etm_can_hv_lamdba_mirror.debug_data;
+	  config_data_ptr = &etm_can_hv_lamdba_mirror.configuration;
+	  can_status_ptr  = &etm_can_hv_lamdba_mirror.can_status;
 	  break;
 	  
 	  
@@ -132,40 +157,45 @@ void ETMCanProcessLogData(void) {
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CONFIG_0:
-	  // DPARKER add configuration data
+	  config_data_ptr->agile_number_high_word     = next_message.word3;
+	  config_data_ptr->agile_number_low_word      = next_message.word2;
+	  config_data_ptr->agile_dash                 = next_message.word1;
+	  config_data_ptr->agile_rev_ascii            = next_message.word0;
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CONFIG_1:
-	  // DPARKER add configuration data
+	  config_data_ptr->serial_number              = next_message.word3;
+	  config_data_ptr->firmware_branch            = next_message.word2;
+	  config_data_ptr->firmware_major_rev         = next_message.word1;
+	  config_data_ptr->firmware_minor_rev         = next_message.word0;
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CAN_ERROR_0:
-	  debug_data_ptr->unknown_message_identifier           = next_message.word3;
-	  debug_data_ptr->message_index_does_not_match_board   = next_message.word2;
-	  debug_data_ptr->message_not_addressed_to_this_board  = next_message.word1;
-	  debug_data_ptr->update_status_unknown_board          = next_message.word0;
+	  can_status_ptr->can_status_CXEC_reg        = next_message.word3;
+	  can_status_ptr->can_status_error_flag      = next_message.word2;
+	  can_status_ptr->can_status_tx_1            = next_message.word1;
+	  can_status_ptr->can_status_tx_2            = next_message.word0;
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CAN_ERROR_1:
-	  debug_data_ptr->can_module_error_flag                = next_message.word3;
-	  debug_data_ptr->command_index_not_valid              = next_message.word2;
-	  debug_data_ptr->default_command_index_not_recognized = next_message.word1;
-	  debug_data_ptr->board_specific_command_unknown       = next_message.word0;
+	  can_status_ptr->can_status_rx_0_filt_0     = next_message.word3;
+	  can_status_ptr->can_status_rx_0_filt_1     = next_message.word2;
+	  can_status_ptr->can_status_rx_1_filt_2     = next_message.word1;
+	  can_status_ptr->can_status_isr_entered     = next_message.word0;
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CAN_ERROR_2:
-	  debug_data_ptr->can_module_error_flag                = next_message.word3;
-	  debug_data_ptr->command_index_not_valid              = next_message.word2;
-	  debug_data_ptr->default_command_index_not_recognized = next_message.word1;
-	  debug_data_ptr->board_specific_command_unknown       = next_message.word0;
+	  can_status_ptr->can_status_unknown_message_identifier     = next_message.word3;
+	  can_status_ptr->can_status_invalid_index                  = next_message.word2;
+	  can_status_ptr->can_status_address_error                  = next_message.word1;
+	  can_status_ptr->can_status_tx_0                           = next_message.word0;
 	  break;
 
 	case ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CAN_ERROR_3:
-	  debug_data_ptr->can_commands_processed               = next_message.word3;
-	  debug_data_ptr->can_rx_0_count                       = next_message.word2;
-	  debug_data_ptr->can_rx_1_count                       = next_message.word1;
-	  debug_data_ptr->can_tx_0_count                       = next_message.word0;
-
+	  can_status_ptr->can_status_message_tx_buffer_overflow     = next_message.word3;
+	  can_status_ptr->can_status_message_rx_buffer_overflow     = next_message.word2;
+	  can_status_ptr->can_status_data_log_rx_buffer_overflow    = next_message.word1;
+	  can_status_ptr->can_status_unused_4                       = next_message.word0;
 	  break;
 	  
 	} 
@@ -202,7 +232,6 @@ void ETMCanProcessLogData(void) {
 void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
   unsigned int index_word;
   index_word = message_ptr->word3;
-  index_word &= 0x0FFF;
   switch (index_word) {
     /*
       Place all board specific commands here
@@ -218,7 +247,7 @@ void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
     break;
       
   default:
-    etm_can_system_debug_data.board_specific_command_unknown++;
+    etm_can_can_status.can_status_invalid_index++;
     break;
   }
 }
@@ -234,7 +263,7 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr) {
       Place all board specific return value commands here
     */
   default:
-    etm_can_system_debug_data.board_specific_return_value_unknown++;
+    etm_can_can_status.can_status_invalid_index++;
     break;
   }
 }
@@ -246,3 +275,6 @@ void ETMCanResetFaults(void) {
 
   
 #endif
+
+
+

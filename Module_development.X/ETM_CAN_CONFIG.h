@@ -2,8 +2,10 @@
 #define __ETM_CAN_CONFIG_H
 
 
-#define __ETM_CAN_MASTER_MODULE
+//#define __ETM_CAN_MASTER_MODULE
 
+
+//#define __USE_CAN_1
 
 #ifdef __ETM_CAN_MASTER_MODULE
 #define ETM_CAN_MY_ADDRESS                  ETM_CAN_ADDR_ETHERNET_BOARD

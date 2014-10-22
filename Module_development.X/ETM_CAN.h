@@ -23,6 +23,11 @@
 */
 
 
+#define ETM_CAN_HIGH_ENERGY           1
+#define ETM_CAN_LOW_ENERGY            0
+
+
+
 
 
 // Define RX SID Masks
@@ -99,12 +104,92 @@
 
 
 
+
+typedef struct {
+  unsigned int pulse_count;
+  unsigned int high_low_energy;
+  
+  unsigned int hvlambda_readback_high_energy_lambda_program_voltage;
+  unsigned int hvlambda_readback_low_energy_lambda_program_voltage;
+  unsigned int hvlambda_readback_peak_lambda_voltage;
+
+  unsigned int afc_readback_current_position;
+  unsigned int afc_readback_target_position;
+  unsigned int afc_readback_a_input;
+  unsigned int afc_readback_b_input;
+  unsigned int afc_readback_filtered_error_reading;
+
+  unsigned int ionpump_readback_high_energy_target_current_reading;
+  unsigned int ionpump_readback_low_energy_target_current_reading;
+
+  unsigned int magmon_readback_magnetron_high_energy_current;
+  unsigned int magmon_readback_magnetron_low_energy_current;
+  unsigned int magmon_readback_arc_detected;
+
+  unsigned char psync_readback_customer_trigger_width;
+  unsigned char psync_readback_filtered_customer_trigger_width;
+  unsigned char psync_readback_high_energy_grid_width;
+  unsigned char psync_readback_high_energy_grid_delay;
+  unsigned char psync_readback_low_energy_grid_width;
+  unsigned char psync_readback_low_energy_grid_delay;
+  
+} ETMCanHighSpeedData;
+
+
+typedef struct {
+  // Configuration 0
+  unsigned int  agile_number_high_word;
+  unsigned int  agile_number_low_word;
+  unsigned int  agile_dash;
+  unsigned int  agile_rev_ascii;
+
+  // Configuarion 1
+  unsigned int  serial_number;
+  unsigned int  firmware_branch;
+  unsigned int  firmware_major_rev;
+  unsigned int  firmware_minor_rev;
+
+} ETMCanAgileConfig;
+
+
+
 typedef struct {
   unsigned int status_word_0;
   unsigned int status_word_1;
   unsigned int data_word_A;
   unsigned int data_word_B;
 } ETMCanStatusRegister;
+
+
+
+typedef struct {
+  // Can data log 0
+  unsigned int can_status_CXEC_reg;
+  unsigned int can_status_error_flag;
+  unsigned int can_status_tx_1;
+  unsigned int can_status_tx_2;
+  
+  // Can data log 1
+  unsigned int can_status_rx_0_filt_0;
+  unsigned int can_status_rx_0_filt_1;
+  unsigned int can_status_rx_1_filt_2;
+  unsigned int can_status_isr_entered;
+
+
+  // Can data log 2
+  unsigned int can_status_unknown_message_identifier;
+  unsigned int can_status_invalid_index; 
+  unsigned int can_status_address_error;
+  unsigned int can_status_tx_0;
+  
+  // Can data log 3
+  unsigned int can_status_message_tx_buffer_overflow;
+  unsigned int can_status_message_rx_buffer_overflow;
+  unsigned int can_status_data_log_rx_buffer_overflow;
+  unsigned int can_status_unused_4;
+
+} ETMCanCanStatus;
+
 
 
 typedef struct {
@@ -139,88 +224,50 @@ typedef struct {
   unsigned int debug_F;
 
   /*
-    unsigned int can_status_CXEC_reg;
-    unsigned int can_status_error_flag;
-    // unused
-    // unused
-
-
-    unsigned int can_status_message_tx_buffer_overflow;
-    unsigned int can_status_message_rx_buffer_overflow;
-    unsigned int can_status_data_log_rx_buffer_overflow;
-    // unused
-
-    unsigned int can_rx_0_filt_0;
-    unsigned int can_rx_0_filt_1;
-    unsigned int can_rx_1_filt_2;
-    unsigned int can_isr_entered;
-
-
-    unsigned int can_status_unknown_message_identifier;
-    unsigned int can_status_invalid_index; // this replaces message_index_does_not_match_board, set_value_index_not_valid, command_index_not_valid, return_value_index_not_valid, default_command_index_not_recognized, board_specific_command_unknown, board_specific_set_value_unknown, board_specific_return_value_unknown
-    unsigned int can_status_address_error;  // This replaces message_not_addressed_to_this_board, update_status_unknown_board
-    // unused
-
-
-
-
-   */
-
-
+  // Can data log 0
+  unsigned int can_status_CXEC_reg;
+  unsigned int can_status_error_flag;
+  unsigned int can_status_tx_1;
+  unsigned int can_status_tx_2;
   
-  unsigned int unknown_message_identifier;      // check
-  unsigned int message_index_does_not_match_board; // check
-  unsigned int message_not_addressed_to_this_board; // check
-  unsigned int update_status_unknown_board; // check
+  // Can data log 1
+  unsigned int can_status_rx_0_filt_0;
+  unsigned int can_status_rx_0_filt_1;
+  unsigned int can_status_rx_1_filt_2;
+  unsigned int can_status_isr_entered;
 
-  unsigned int can_module_error_flag; // check
-  unsigned int command_index_not_valid; // check
-  unsigned int default_command_index_not_recognized; // check
-  unsigned int board_specific_command_unknown; // check
 
-  unsigned int set_value_index_not_valid; // check
-  unsigned int board_specific_set_value_unknown; // check
-  unsigned int return_value_index_not_valid; // check
-  unsigned int board_specific_return_value_unknown; // check
-
-  unsigned int can_commands_processed; // check
-  unsigned int can_rx_0_count; // check
-  unsigned int can_rx_1_count; // check
-  unsigned int can_tx_0_count; // check
-
+  // Can data log 2
+  unsigned int can_status_unknown_message_identifier;
+  unsigned int can_status_invalid_index; 
+  unsigned int can_status_address_error;
+  unsigned int can_status_tx_0;
+  
+  // Can data log 3
+  unsigned int can_status_message_tx_buffer_overflow;
+  unsigned int can_status_message_rx_buffer_overflow;
+  unsigned int can_status_data_log_rx_buffer_overflow;
+  unsigned int can_status_unused_4;
+  */
 } ETMCanSystemDebugData;
 
 
 
 typedef struct {
-  unsigned int pulse_count;
-  unsigned int high_low_energy;
+  // ------------------- ETHERNET CONTROL BOARD --------------------- //
+  // Standard Registers for all Boards
+  ETMCanStatusRegister*  status_data; 
+  ETMCanSystemDebugData* debug_data;
+  ETMCanCanStatus*       can_status;
+  ETMCanAgileConfig*     configuration;
   
-  unsigned int hvlambda_readback_high_energy_lambda_program_voltage;
-  unsigned int hvlambda_readback_low_energy_lambda_program_voltage;
-  unsigned int hvlambda_readback_peak_lambda_voltage;
+  // Values that the Ethernet control board sets on HV Lambda
+  // NONE AT THIS TIME
 
-  unsigned int afc_readback_current_position;
-  unsigned int afc_readback_target_position;
-  unsigned int afc_readback_a_input;
-  unsigned int afc_readback_b_input;
-  unsigned int afc_readback_filtered_error_reading;
+  // "SLOW" Data that the Ethernet control board reads back from HV Lambda
+  // DOES NOT MAKE SENSE FOR THIS BOARD
 
-  unsigned int ionpump_readback_high_energy_target_current_reading;
-  unsigned int ionpump_readback_low_energy_target_current_reading;
-
-  unsigned int magmon_readback_magnetron_high_energy_current;
-  unsigned int magmon_readback_magnetron_low_energy_current;
-  unsigned int magmon_readback_arc_detected;
-
-  unsigned char psync_readback_customer_trigger_width;
-  unsigned char psync_readback_filtered_customer_trigger_width;
-  unsigned char psync_readback_high_energy_grid_width;
-  unsigned char psync_readback_high_energy_grid_delay;
-  unsigned char psync_readback_low_energy_grid_width;
-  unsigned char psync_readback_low_energy_grid_delay;
-  
-} ETMCanHighSpeedData;
+} ETMCanRamMirrorEthernetBoard;
 
 
 typedef struct {
@@ -228,6 +275,8 @@ typedef struct {
   // Standard Registers for all Boards
   ETMCanStatusRegister  status_data; 
   ETMCanSystemDebugData debug_data;
+  ETMCanCanStatus       can_status;
+  ETMCanAgileConfig     configuration;
   
   // Values that the Ethernet control board sets on HV Lambda
   unsigned int hvlambda_high_energy_set_point;
@@ -246,6 +295,8 @@ typedef struct {
   // Standard Registers for all Boards
   ETMCanStatusRegister  status_data; 
   ETMCanSystemDebugData debug_data;
+  ETMCanCanStatus       can_status;
+  ETMCanAgileConfig     configuration;
   
   // Values that the Ethernet control board sets 
   // NONE!!!!
@@ -263,6 +314,8 @@ typedef struct {
   // Standard Registers for all Boards
   ETMCanStatusRegister  status_data; 
   ETMCanSystemDebugData debug_data;
+  ETMCanCanStatus       can_status;
+  ETMCanAgileConfig     configuration;
   
   // Values that the Ethernet control board sets 
   unsigned int afc_home_position;
@@ -283,6 +336,8 @@ typedef struct {
   // Standard Registers for all Boards
   ETMCanStatusRegister  status_data; 
   ETMCanSystemDebugData debug_data;
+  ETMCanCanStatus       can_status;
+  ETMCanAgileConfig     configuration;
   
   // Values that the Ethernet control board sets 
   // NONE!!!!
@@ -310,6 +365,8 @@ typedef struct {
   // Standard Registers for all Boards
   ETMCanStatusRegister  status_data; 
   ETMCanSystemDebugData debug_data;
+  ETMCanCanStatus       can_status;
+  ETMCanAgileConfig     configuration;
   
   // Values that the Ethernet control board sets 
   unsigned int htrmag_magnet_current_set_point;
@@ -334,6 +391,8 @@ typedef struct {
   // Standard Registers for all Boards
   ETMCanStatusRegister  status_data; 
   ETMCanSystemDebugData debug_data;
+  ETMCanCanStatus       can_status;
+  ETMCanAgileConfig     configuration;
   
   // Values that the Ethernet control board sets 
   unsigned int gun_high_energy_pulse_top_voltage_set_point;
@@ -364,6 +423,8 @@ typedef struct {
   // Standard Registers for all Boards
   ETMCanStatusRegister  status_data; 
   ETMCanSystemDebugData debug_data;
+  ETMCanCanStatus       can_status;
+  ETMCanAgileConfig     configuration;
   
   // Values that the Ethernet control board sets 
   // NONE!!!!
@@ -385,6 +446,8 @@ typedef struct {
   // Standard Registers for all Boards
   ETMCanStatusRegister  status_data; 
   ETMCanSystemDebugData debug_data;
+  ETMCanCanStatus       can_status;
+  ETMCanAgileConfig     configuration;
   
   // Values that the Ethernet control board sets 
   unsigned char psync_grid_delay_high_intensity_3;
@@ -436,6 +499,8 @@ extern ETMCanMessageBuffer etm_can_rx_data_log_buffer;
 // Public Variables
 extern unsigned int etm_can_next_pulse_level;
 extern unsigned int etm_can_next_pulse_count;
+
+
 #ifdef __ETM_CAN_MASTER_MODULE
 extern ETMCanRamMirrorHVLambda          etm_can_hv_lamdba_mirror;
 extern ETMCanRamMirrorIonPump           etm_can_ion_pump_mirror;
@@ -446,30 +511,37 @@ extern ETMCanRamMirrorGunDriver         etm_can_gun_driver_mirror;
 extern ETMCanRamMirrorMagnetronCurrent  etm_can_magnetron_current_mirror;
 extern ETMCanRamMirrorPulseSync         etm_can_pulse_sync_mirror;
 extern ETMCanHighSpeedData              etm_can_high_speed_data_test;
+extern ETMCanRamMirrorEthernetBoard     etm_can_ethernet_board_data;
+
 #else
 extern unsigned int etm_can_high_speed_data_logging_enabled;
 #endif
 
 // Public Debug and Status registers
 extern ETMCanSystemDebugData etm_can_system_debug_data;
-extern ETMCanStatusRegister etm_can_status_register;
-
-
+extern ETMCanStatusRegister  etm_can_status_register;
+extern ETMCanAgileConfig     etm_can_my_configuration;
+extern ETMCanCanStatus       etm_can_can_status;
 
 // Public Functions
 void ETMCanInitialize(void);
 void ETMCanProcessMessage(void);
 void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr);
 
+void ETMCanPulseSyncSendNextPulseLevel(unsigned int next_pulse_level, unsigned int next_pulse_count);
+void ETMCanIonPumpSendTargetCurrentReading(unsigned int target_current_reading, unsigned int energy_level, unsigned int pulse_count);
+
 #ifdef __ETM_CAN_MASTER_MODULE
 void ETMCanUpdateStatusBoardSpecific(ETMCanMessage* message_ptr);
 void ETMCanProcessLogData(void);
+void ETMCanSendSync(unsigned int sync_3, unsigned int sync_2, unsigned int sync_1, unsigned int sync_0);
+void ETMCanEthernetSendPulseSyncOperate(unsigned int operate);
+void ETMCanMaster100msCommunication(void);
 #else
 void ETMCanResetFaults(void);
 void ETMCanSendStatus(void);
 void ETMCanLogData(unsigned int packet_id, unsigned int word3, unsigned int word2, unsigned int word1, unsigned int word0);
-void ETMCanLogDefaultDebug(void);
-void ETMCanLogConfig(void);
+void ETMCanSlaveLog100ms();
 void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr);
 void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 #endif
@@ -681,5 +753,96 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
 #define ETM_CAN_DATA_LOG_REGISTER_PULSE_TOP_SLOW_TIMING_DATA_1          0x3E
 #define ETM_CAN_DATA_LOG_REGISTER_PULSE_TOP_SLOW_TIMING_DATA_2          0x3F
 
+
+
+#ifdef __USE_CAN_1
+
+#define _CXIE                       _C1IE
+#define _CXIF                       _C1IF
+#define _CXIP                       _C1IP
+
+#define CXTX0CON                    C1TX0CON
+#define CXTX1CON                    C1TX1CON
+#define CXINTF                      C1INTF
+#define CXCTRL                      C1CTRL
+#define CXCFG1                      C1CFG1
+#define CXCFG2                      C1CFG2
+#define CXRXM0SID                   C1RXM0SID
+#define CXRXM1SID                   C1RXM1SID
+#define CXRXF0SID                   C1RXF0SID
+#define CXRXF1SID                   C1RXF1SID
+#define CXRXF2SID                   C1RXF2SID
+#define CXRXF3SID                   C1RXF3SID
+#define CXRXF4SID                   C1RXF4SID
+#define CXRXF5SID                   C1RXF5SID
+#define CXTX2CON                    C1TX2CON
+#define CXTX0DLC                    C1TX0DLC
+#define CXTX1DLC                    C1TX1DLC
+#define CXTX2DLC                    C1TX2DLC
+#define CXRX0CON                    C1RX0CON
+#define CXRX1CON                    C1RX1CON
+#define CXRX1SID                    C1RX1SID
+#define CXRX1B1                     C1RX1B1
+#define CXEC                        C1EC
+
+#define CXRX1CONbits                C1RX1CONbits
+#define CXCTRLbits                  C1CTRLbits
+#define CXTX0CONbits                C1TX0CONbits
+#define CXTX1CONbits                C1TX1CONbits
+#define CXINTFbits                  C1INTFbits
+#define CXRX0CONbits                C1RX0CONbits
+#define CXINTEbits                  C1INTEbits
+
+#define _CXInterrupt                _C1Interrupt
+
+
+
+#else
+
+#define _CXIE                       _C2IE
+#define _CXIF                       _C2IF
+#define _CXIP                       _C2IP
+
+#define CXTX0CON                    C2TX0CON
+#define CXTX1CON                    C2TX1CON
+#define CXINTF                      C2INTF
+#define CXCTRL                      C2CTRL
+#define CXCFG1                      C2CFG1
+#define CXCFG2                      C2CFG2
+#define CXRXM0SID                   C2RXM0SID
+#define CXRXM1SID                   C2RXM1SID
+#define CXRXF0SID                   C2RXF0SID
+#define CXRXF1SID                   C2RXF1SID
+#define CXRXF2SID                   C2RXF2SID
+#define CXRXF3SID                   C2RXF3SID
+#define CXRXF4SID                   C2RXF4SID
+#define CXRXF5SID                   C2RXF5SID
+#define CXTX2CON                    C2TX2CON
+#define CXTX0DLC                    C2TX0DLC
+#define CXTX1DLC                    C2TX1DLC
+#define CXTX2DLC                    C2TX2DLC
+#define CXRX0CON                    C2RX0CON
+#define CXRX1CON                    C2RX1CON
+#define CXRX1SID                    C2RX1SID
+#define CXRX1B1                     C2RX1B1
+#define CXEC                        C2EC
+
+#define CXRX1CONbits                C2RX1CONbits
+#define CXCTRLbits                  C2CTRLbits
+#define CXTX0CONbits                C2TX0CONbits
+#define CXTX1CONbits                C2TX1CONbits
+#define CXINTFbits                  C2INTFbits
+#define CXRX0CONbits                C2RX0CONbits
+#define CXINTEbits                  C2INTEbits
+
+#define _CXInterrupt                _C2Interrupt
+
+
+
+#endif
+
+
+
+#define MacroETMCanCheckTXBuffer() if (!CXTX0CONbits.TXREQ) { _CXIF = 1; }
 
 #endif
