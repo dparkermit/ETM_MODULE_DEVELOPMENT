@@ -17,23 +17,46 @@
 	;; ----------------------------------------------------------
 
 	
-	.global  _EtmScaleFactor2
+	.global  _ETMScaleFactor2
 	;; uses and does not restore W0->W3
 	.text
-_EtmScaleFactor2:
+_ETMScaleFactor2:
 	;; Value is stored in w0
 	;; Scale is stored in w1
+	;; Offset is stored in w2 
 
+	CP0		W2
+	BRA		NN,  _ETMScaleFactor2_offset_not_negative
+
+	;; The offset is negative
+	NEG		W2,W2	                ; W2 is now -(w2) - which is now a positive number 
+	SUB             W0,W2,W0                ; Subtract the offset from the base value
+	;; Look for underflow	
+	BRA             OV, _ETMScaleFactor2_addition_done
+	
+
+_ETMScaleFactor2_offset_not_negative:		
+	ADD             W0,W2,W3                ; Add the offset to the base value
+	;; Look for overflow
+	CP              W3,W2	                ; If W3 is less than W2 then there was an overflow
+	BRA             OV, _ETMScaleFactor2_addition_done
+	;; There was an overflow in the addition
+	;; Increment the overflow counter and set the results to 0xFFFF
+	MOV		#0xFFFF, W0
+	INC		_saturation_etmscalefactor2_count
+	BRA             _ETMScaleFactor2_addition_done	
+
+_ETMScaleFactor2_addition_done:		
 	MUL.UU		W0,W1,W2 		; Multiply W0 by W1 and store in W2:W3, MSW is stored in W3
 	MUL.UU		W3,#2,W0		; Multiply W3 by 2 and store the results in W0:W1 - W0(LSW) is the result we care about
 						
 	CP0		W1			; If W1 is Zero, then there was NOT an overflow
-	BRA		Z, _EtmScaleFactor2_no_overflow
+	BRA		Z, _ETMScaleFactor2_multiply_ok
 	;; There was an overflow in the multiply opertion
 	;; Increment the overflow counter and set the result to 0xFFFF
 	MOV		#0xFFFF, W0
 	INC		_saturation_etmscalefactor2_count
-_EtmScaleFactor2_no_overflow:	
+_ETMScaleFactor2_multiply_ok:	
 	;; OR together W0, W1 into W0 to give the final results
 	LSR		W2, #15, W1		; Take the 1 MSbits of W2 and store then as the 1 LSB of W1
 	IOR		W0, W1, W0		; Add W1 to W0 (using bitwise or in this case)
@@ -43,10 +66,10 @@ _EtmScaleFactor2_no_overflow:
 	;; ----------------------------------------------------------
 
 	
-	.global  _EtmScaleFactor16
+	.global  _ETMScaleFactor16
 	;; uses and does not restore W0->W3
 	.text
-_EtmScaleFactor16:
+_ETMScaleFactor16:
 	;; Value is stored in w0
 	;; Scale is stored in w1
 
@@ -54,12 +77,12 @@ _EtmScaleFactor16:
 	MUL.UU		W3,#16,W0		; Multiply W3 by 16 and store the results in W0:W1 - W0(LSW) is the result we care about
 						
 	CP0		W1			; If W1 is Zero, then there was NOT an overflow
-	BRA		Z, _EtmScaleFactor16_no_overflow
+	BRA		Z, _ETMScaleFactor16_no_overflow
 	;; There was an overflow in the multiply opertion
 	;; Increment the overflow counter and set the result to 0xFFFF
 	MOV		#0xFFFF, W0
 	INC		_saturation_etmscalefactor16_count
-_EtmScaleFactor16_no_overflow:	
+_ETMScaleFactor16_no_overflow:	
 	;; OR together W0, W1 into W0 to give the final results
 	LSR		W2, #12, W1		; Take the 4 MSbits of W2 and store then as the 4 LSB of W1
 	IOR		W0, W1, W0		; Add W1 to W0 (using bitwise or in this case)

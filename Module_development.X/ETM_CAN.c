@@ -1,6 +1,6 @@
 #include <p30Fxxxx.h>
 #include "ETM_CAN.h"
-
+#include "timer.h"  // DPARKER remove the requirement for this
 
 
 
@@ -41,12 +41,8 @@ void ETMCanDoSync(ETMCanMessage* message_ptr);
 #endif
 
 //local variables
-#ifdef __ETM_CAN_MASTER_MODULE
-#else
+
 unsigned int etm_can_default_transmit_counter;
-#endif
-
-
 
 
 
@@ -174,17 +170,84 @@ void ETMCanEthernetSendPulseSyncOperate(unsigned int operate) {
 
 
 void ETMCanMaster100msCommunication(void) {
-  // Send Enable/Disable command to Pulse Sync Board  (this is on TX2)
+  /*
+    One command is schedule to be sent every 25ms
+    This loops through 8 times so each command is sent once every 200mS (5Hz)
+    The sync command and Pulse Sync enable command are each sent twice for an effecive rate of 100ms (10Hz)
+  */
 
-  // Send Sync Command (this is on TX1)
+  ETMCanMessage test_message;
   
-  // Send High/Low Energy Program voltage to Lambda Board 
+  if (_T2IF) {
+    // should be true once every 25mS
+    _T2IF = 0;
+    
+    etm_can_default_transmit_counter++;
+    etm_can_default_transmit_counter &= 0x7;
 
-  // Send Heater/Magnet Current to Heater Magnet Board
+    
+    switch (etm_can_default_transmit_counter) 
+      {
+      case 0x0:
+	// DPARKER change to the "operate LED"
+	if (_LATG14) {
+	  _LATG14 = 0;
+	} else {
+	  _LATG14 = 1;
+	}
+	// Send Sync Command (this is on TX1)
+	ETMCanSendSync(0,0,0,0);
+	break;
 
-  // Send High/Low Energy Pulse top voltage to Gun Driver
-  // Send Heater/Cathode set points to Gun Driver
+      case 0x1:
+	// Send Enable/Disable command to Pulse Sync Board  (this is on TX2)		
+	break;
+	
+      case 0x2:
+	// Send High/Low Energy Program voltage to Lambda Board 
+	
+	// Send HV OFF Command (this will status register data word B to 0xFFFF)
+	test_message.identifier = (ETM_CAN_MSG_CMD_TX | ((ETM_CAN_ADDR_HV_LAMBDA_BOARD) << 3));
+	test_message.word3 = ETM_CAN_REGISTER_HV_LAMBDA_CMD_HV_OFF;
+	test_message.word2 = 0;
+	test_message.word1 = 0;
+	test_message.word0 = 0;
+	ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &test_message);
+	
+	// Send Set Value
+	test_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_HV_LAMBDA_BOARD << 3));
+	test_message.word3 = ETM_CAN_REGISTER_HV_LAMBDA_SET_1_LAMBDA_SET_POINT;
+	test_message.word2 = 16000;
+	test_message.word1 = 18000;
+	test_message.word0 = 0;
+	ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &test_message);
+	
+	MacroETMCanCheckTXBuffer();
+	break;
+	
+      case 0x3:
+	// Send Heater/Magnet Current to Heater Magnet Board
+	break;
+	
+      case 0x4:
+	// Send Sync Command (this is on TX1)
+	ETMCanSendSync(0,0,0,0);
+	break;
+	
+      case 0x5:
+	// Send Enable/Disable command to Pulse Sync Board  (this is on TX2)
+	break;
+	
+      case 0x6:
+	// Send High/Low Energy Pulse top voltage to Gun Driver
+	break;
+	
+      case 0x7:
+	// Send Heater/Cathode set points to Gun Driver
+	break;
 
+      }
+  }
 }
 
 #else
@@ -351,8 +414,6 @@ void ETMCanSlaveLog100ms(void) {
     }
     
     ETMCanSendStatus(); // Send out the status every 100mS
-    etm_can_system_debug_data.debug_0 = etm_can_tx_message_buffer.message_write_count;
-    etm_can_system_debug_data.debug_1 = etm_can_rx_message_buffer.message_write_count;
     
     switch (etm_can_default_transmit_counter) 
       {
@@ -403,8 +464,22 @@ void ETMCanSlaveLog100ms(void) {
       case 0xB:
 	ETMCanLogData(ETM_CAN_DATA_LOG_REGISTER_DEFAULT_CONFIG_1, etm_can_my_configuration.serial_number, etm_can_my_configuration.firmware_branch, etm_can_my_configuration.firmware_major_rev, etm_can_my_configuration.firmware_minor_rev);
 	break;
+      
+      case 0xC:
+	ETMCanLogCustomPacketC();
+	break;
+	
+      case 0xD:
+	ETMCanLogCustomPacketD();
+	break;
 
+      case 0xE:
+	ETMCanLogCustomPacketE();
+	break;
 
+      case 0xF:
+	ETMCanLogCustomPacketF();
+	break;
       }
   }
 }
@@ -416,7 +491,6 @@ void ETMCanSlaveLog100ms(void) {
 
 
 //------------------------- For use with pulse sync board only ----------------------- //
-
 
 void ETMCanPulseSyncSendNextPulseLevel(unsigned int next_pulse_level, unsigned int next_pulse_count) {
   ETMCanMessage lvl_msg;
@@ -544,6 +618,23 @@ void ETMCanInitialize(void) {
   
   // Enable Can interrupt
   _CXIE = 1;
+
+
+
+
+#ifdef __ETM_CAN_MASTER_MODULE
+  T2CON = (T2_OFF & T2_IDLE_CON & T2_GATE_OFF & T2_PS_1_256 & T2_32BIT_MODE_OFF & T2_SOURCE_INT);
+  PR2 = 976;  // 25mS Period
+#else
+  T2CON = (T2_OFF & T2_IDLE_CON & T2_GATE_OFF & T2_PS_1_256 & T2_32BIT_MODE_OFF & T2_SOURCE_INT);
+  PR2 = 3906;  // 100mS period
+#endif
+
+
+  TMR2 = 0;
+  _T2IF = 0;
+  _T2IE = 0;
+  T2CONbits.TON = 1;
 }
 
 

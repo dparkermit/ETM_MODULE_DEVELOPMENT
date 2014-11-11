@@ -2,10 +2,10 @@
 #include <libpic30.h>
 //#include "Main.h"
 #include "ETM_CAN.h"
-#include "timer.h"
+
 
 _FOSC(ECIO & CSW_FSCM_OFF); 
-_FWDT(WDT_OFF & WDTPSA_1 & WDTPSB_2); 
+_FWDT(WDT_ON & WDTPSA_64 & WDTPSB_8);  // 1 Second watchdog timer 
 _FBORPOR(PWRT_OFF & BORV_45 & PBOR_OFF & MCLR_EN);
 _FBS(WR_PROTECT_BOOT_OFF & NO_BOOT_CODE & NO_BOOT_EEPROM & NO_BOOT_RAM);
 _FSS(WR_PROT_SEC_OFF & NO_SEC_CODE & NO_SEC_EEPROM & NO_SEC_RAM);
@@ -14,12 +14,10 @@ _FICD(PGD);
 
 
 unsigned int unit_counter;
-void Do100mSDataLog(void);
 
 
 
 
-ETMCanMessage test_message;
 
 ETMCanMessage test_read_message;
 
@@ -35,6 +33,15 @@ unsigned int slots_full = 0;
 int main(void) {
   global_0 = 0;
   global_1 = 0;
+
+  while (global_0 <= 0xFF00) {
+    global_0++;
+    ClrWdt();
+    global_1 = 0;
+    while (global_1 <= 100) {
+      global_1++;
+    }
+  }
   
   ETMCanInitialize();
 
@@ -70,33 +77,26 @@ int main(void) {
   
 
   
-  T2CON = (T2_OFF & T2_IDLE_CON & T2_GATE_OFF & T2_PS_1_256 & T2_32BIT_MODE_OFF & T2_SOURCE_INT);
-  PR2 = 3906;  // 100mS period
-  TMR2 = 0;
-  _T2IF = 0;
-  _T2IE = 0;
-  T2CONbits.TON = 1;
 
 
-  etm_can_status_register.status_word_0 = 0xFFFF;
+  etm_can_status_register.status_word_0 = 0x0000;
   etm_can_status_register.status_word_1 = 0x0000;
   etm_can_status_register.data_word_A = 0x0000;
-  etm_can_status_register.data_word_B = 0x0001; 
+  etm_can_status_register.data_word_B = 0x0000; 
   
   _LATG14 = 0;
   _TRISG14 = 0;
   
   while (1) {
-    
-
-    
-    
     ETMCanProcessMessage();
     
 #ifdef __ETM_CAN_MASTER_MODULE
     ETMCanProcessLogData();
     ETMCanMaster100msCommunication();
 #else
+    etm_can_system_debug_data.debug_0 = etm_can_tx_message_buffer.message_write_count;
+    etm_can_system_debug_data.debug_1 = etm_can_rx_message_buffer.message_write_count;
+    etm_can_status_register.status_word_0 = 0xF0F0;
     ETMCanSlaveLog100ms();
 #endif
   }
@@ -104,55 +104,3 @@ int main(void) {
 
 
 
-void Do100mSDataLog(void) { 
-
-
-#ifdef __ETM_CAN_MASTER_MODULE
-
-  
-  // Send Sync Command
-  // DPARKER - Need to write send sync function
-  
-  
-  
-  // Send HV OFF Command (this will status register data word B to 0xFFFF)
-  test_message.identifier = (ETM_CAN_MSG_CMD_TX | ((ETM_CAN_ADDR_HV_LAMBDA_BOARD) << 3));
-  test_message.word3 = ETM_CAN_REGISTER_HV_LAMBDA_CMD_HV_OFF;
-  test_message.word2 = 0;
-  test_message.word1 = 0;
-  test_message.word0 = 0;
-  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &test_message);
-  
-  // Send Set Value
-  test_message.identifier = (ETM_CAN_MSG_SET_1_TX | (ETM_CAN_ADDR_HV_LAMBDA_BOARD << 3));
-  test_message.word3 = ETM_CAN_REGISTER_HV_LAMBDA_SET_1_LAMBDA_SET_POINT;
-  test_message.word2 = 0;
-  test_message.word1 = 0;
-  test_message.word0 = 0;
-  ETMCanAddMessageToBuffer(&etm_can_tx_message_buffer, &test_message);
-
-  MacroETMCanCheckTXBuffer()  
-
-
-  /*
-    DPARKER, here is the problem to solve
-   
-    When we write to a buffer that backs up a TX buffer (etm_can_tx_message_buffer, etm_can_rx_data_log_buffer), the data will not get transfered to the TX register unless the ISR is called.
-    One work around is to the schedule to ISR after every time we add to the buffer, an alternative is to check and see if the TX register is empty and if it is initiate the transfer
- 
-  */
-  
-
-
-#else
-  
-
-  
-
-
-
-
-  
-#endif
-
-}

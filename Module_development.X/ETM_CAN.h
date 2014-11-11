@@ -544,6 +544,10 @@ void ETMCanLogData(unsigned int packet_id, unsigned int word3, unsigned int word
 void ETMCanSlaveLog100ms();
 void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr);
 void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr);
+void ETMCanLogCustomPacketC(void);
+void ETMCanLogCustomPacketD(void);
+void ETMCanLogCustomPacketE(void);
+void ETMCanLogCustomPacketF(void);
 #endif
 
 

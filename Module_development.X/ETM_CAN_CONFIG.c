@@ -9,7 +9,8 @@ void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr) {
       Place all board specific set values here
     */
   case ETM_CAN_REGISTER_HV_LAMBDA_SET_1_LAMBDA_SET_POINT:
-    etm_can_status_register.data_word_A = message_ptr->word0;
+    etm_can_status_register.data_word_A = message_ptr->word2;  // Low energy Program Voltage
+    etm_can_status_register.data_word_B = message_ptr->word1;  // High energy Program Voltage
     break;
 
   default:
@@ -227,7 +228,7 @@ void ETMCanProcessLogData(void) {
   }
 }
 
-#else
+#else //#ifdef __ETM_CAN_MASTER_MODULE
 
 void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
   unsigned int index_word;
@@ -239,11 +240,11 @@ void ETMCanExecuteCMDBoardSpecific(ETMCanMessage* message_ptr) {
     
     
   case ETM_CAN_REGISTER_HV_LAMBDA_CMD_HV_ON:
-    etm_can_status_register.data_word_B = 0x0000;
+    etm_can_status_register.status_word_1 = 0x0000;
     break;
 
   case ETM_CAN_REGISTER_HV_LAMBDA_CMD_HV_OFF:
-    etm_can_status_register.data_word_B = 0xFFFF;
+    etm_can_status_register.status_word_1 = 0xFFFF;
     break;
       
   default:
@@ -273,8 +274,45 @@ void ETMCanResetFaults(void) {
   // Reset faults associated with this board
 }
 
-  
-#endif
 
+void ETMCanLogCustomPacketC(void) {
+  /* 
+     Use this to log Board specific data packet
+     This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
+  */
+  ETMCanLogData(ETM_CAN_DATA_LOG_REGISTER_HV_LAMBDA_FAST_PROGRAM_VOLTAGE, 0, 18000, 14000, 17950);
+}
+
+void ETMCanLogCustomPacketD(void) {
+  /* 
+     Use this to log Board specific data packet
+     This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
+  */
+  ETMCanLogData(ETM_CAN_DATA_LOG_REGISTER_HV_LAMBDA_SLOW_SET_POINT, 0, 18000, 14000, 17950);
+}
+
+void ETMCanLogCustomPacketE(void) {
+  /* 
+     Use this to log Board specific data packet
+     This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
+  */
+
+  // There is no E packet for HV Lamdba, leave blank
+
+}
+
+void ETMCanLogCustomPacketF(void) {
+  /* 
+     Use this to log Board specific data packet
+     This will get executed once per update cycle (1.6 seconds) and will be spaced out in time from the other log data
+  */
+
+  // There is no F packet for HV Lamdba, leave blank
+
+}
+
+
+  
+#endif  //#ifdef __ETM_CAN_MASTER_MODULE
 
 
