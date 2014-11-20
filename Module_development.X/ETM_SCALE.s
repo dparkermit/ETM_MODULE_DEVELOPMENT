@@ -29,17 +29,20 @@ _ETMScaleFactor2:
 	BRA		NN,  _ETMScaleFactor2_offset_not_negative
 
 	;; The offset is negative
-	NEG		W2,W2	                ; W2 is now -(w2) - which is now a positive number 
-	SUB             W0,W2,W0                ; Subtract the offset from the base value
-	;; Look for underflow	
-	BRA             OV, _ETMScaleFactor2_addition_done
-	
+	ADD             W0,W2,W0                ; Add the offset to the base value
+	;; Look for overflow
+	BRA             C, _ETMScaleFactor2_addition_done
+	;; There was overflow with the negative offset
+	;; Increment the overflow counter and set the results to 0x0000
+	MOV		#0x0000, W0
+	INC		_saturation_etmscalefactor2_count
+	BRA             _ETMScaleFactor2_addition_done	
 
 _ETMScaleFactor2_offset_not_negative:		
-	ADD             W0,W2,W3                ; Add the offset to the base value
+	ADD             W0,W2,W0                ; Add the offset to the base value
 	;; Look for overflow
-	CP              W3,W2	                ; If W3 is less than W2 then there was an overflow
-	BRA             OV, _ETMScaleFactor2_addition_done
+	;; 	CP              W3,W2 ;If W3 is less than W2 then there was an overflow
+	BRA             NC, _ETMScaleFactor2_addition_done
 	;; There was an overflow in the addition
 	;; Increment the overflow counter and set the results to 0xFFFF
 	MOV		#0xFFFF, W0
@@ -62,6 +65,9 @@ _ETMScaleFactor2_multiply_ok:
 	IOR		W0, W1, W0		; Add W1 to W0 (using bitwise or in this case)
 	RETURN
 
+
+
+
 	
 	;; ----------------------------------------------------------
 
@@ -72,7 +78,34 @@ _ETMScaleFactor2_multiply_ok:
 _ETMScaleFactor16:
 	;; Value is stored in w0
 	;; Scale is stored in w1
+	;; Offset is stored in w2 	
 
+	CP0		W2
+	BRA		NN,  _ETMScaleFactor16_offset_not_negative
+
+	;; The offset is negative
+	ADD             W0,W2,W0                ; Add the offset to the base value
+	;; Look for overflow
+	BRA             C, _ETMScaleFactor16_addition_done
+	;; There was overflow with the negative offset
+	;; Increment the overflow counter and set the results to 0x0000
+	MOV		#0x0000, W0
+	INC		_saturation_etmscalefactor16_count
+	BRA             _ETMScaleFactor16_addition_done	
+
+_ETMScaleFactor16_offset_not_negative:		
+	ADD             W0,W2,W0                ; Add the offset to the base value
+	;; Look for overflow
+	;; 	CP              W3,W2 ;If W3 is less than W2 then there was an overflow
+	BRA             NC, _ETMScaleFactor16_addition_done
+	;; There was an overflow in the addition
+	;; Increment the overflow counter and set the results to 0xFFFF
+	MOV		#0xFFFF, W0
+	INC		_saturation_etmscalefactor16_count
+	BRA             _ETMScaleFactor16_addition_done	
+
+_ETMScaleFactor16_addition_done:		
+	
 	MUL.UU		W0,W1,W2 		; Multiply W0 by W1 and store in W2:W3, MSW is stored in W3
 	MUL.UU		W3,#16,W0		; Multiply W3 by 16 and store the results in W0:W1 - W0(LSW) is the result we care about
 						
