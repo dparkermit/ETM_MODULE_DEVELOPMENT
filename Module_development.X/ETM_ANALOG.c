@@ -133,7 +133,7 @@ void ETMAnalogScaleCalibrateDACSetting(AnalogOutput* ptr_analog_output) {
 void ETMAnalogScaleCalibrateADCReading(AnalogInput* ptr_analog_input) {
   unsigned int temp;
   // Calibrate the adc reading based on the known gain/offset errors of the external circuitry
-  temp = ETMScaleFactor16(ptr_analog_input->filtered_adc_reading, ptr_analog_input->calibration_external_scale, ptr_analog_input->calibration_external_offset);
+  temp = ETMScaleFactor2(ptr_analog_input->filtered_adc_reading, ptr_analog_input->calibration_external_scale, ptr_analog_input->calibration_external_offset);
 
   // Calibrate the adc reading based on the known gain/offset errors of this board
   temp = ETMScaleFactor2(temp, ptr_analog_input->calibration_internal_scale, ptr_analog_input->calibration_internal_offset);
