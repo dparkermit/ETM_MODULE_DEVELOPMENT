@@ -10,6 +10,8 @@
 #endif
 
 
+unsigned int global_reset_faults;
+
 void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr) {
   unsigned int index_word;
   index_word = message_ptr->word3;
@@ -22,6 +24,7 @@ void ETMCanSetValueBoardSpecific(ETMCanMessage* message_ptr) {
   case ETM_CAN_REGISTER_HEATER_MAGNET_SET_1_CURRENT_SET_POINT:
     ETMAnalogSetOutput(&global_data_A36224_500.analog_output_heater_current, message_ptr->word1);
     ETMAnalogSetOutput(&global_data_A36224_500.analog_output_electromagnet_current, message_ptr->word0);
+    ETMCanClearBit(&etm_can_status_register.status_word_0, STATUS_BIT_BOARD_WAITING_INITIAL_CONFIG);
     break;
 
 #endif
@@ -107,6 +110,7 @@ void ETMCanReturnValueBoardSpecific(ETMCanMessage* message_ptr) {
 
 void ETMCanResetFaults(void) {
   // Reset faults associated with this board
+  global_reset_faults = 1;
 }
 
 
