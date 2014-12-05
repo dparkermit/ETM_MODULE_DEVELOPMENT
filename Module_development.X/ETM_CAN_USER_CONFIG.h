@@ -2,7 +2,7 @@
 #define __ETM_CAN_USER_CONFIG_H
 
 
-#define __A36224_500
+#define __A36444
 
 #ifdef __A36444
 #define __USE_CAN_1
@@ -11,6 +11,11 @@
 #define ETM_CAN_MY_ADDRESS                  ETM_CAN_ADDR_HV_LAMBDA_BOARD
 #define PIN_CAN_OPERATION_LED               _LATG13
 #define ETM_CAN_INTERRUPT_PRIORITY          4
+#define ETM_CAN_AGILE_ID_HIGH               0
+#define ETM_CAN_AGILE_ID_LOW                36444
+#define ETM_CAN_AGILE_DASH                  0
+#define ETM_CAN_AGILE_REV                   'A'
+#define ETM_CAN_SERIAL_NUMBER               100 // DPARKER need to figure out how to set this in FLASH when programming
 #endif
 
 
@@ -22,6 +27,11 @@
 #define ETM_CAN_MY_ADDRESS                  ETM_CAN_ADDR_HEATER_MAGNET_BOARD
 #define PIN_CAN_OPERATION_LED               _LATC4
 #define ETM_CAN_INTERRUPT_PRIORITY          4
+#define ETM_CAN_AGILE_ID_HIGH               0
+#define ETM_CAN_AGILE_ID_LOW                36224
+#define ETM_CAN_AGILE_DASH                  500
+#define ETM_CAN_AGILE_REV                   'A'                   
+#define ETM_CAN_SERIAL_NUMBER               100 // DPARKER need to figure out how to set this in FLASH when programming
 #endif
 
 
@@ -34,6 +44,11 @@
 #define ETM_CAN_MY_ADDRESS                  ETM_CAN_ADDR_ETHERNET_BOARD
 #define PIN_CAN_OPERATION_LED               _LATG13
 #define ETM_CAN_INTERRUPT_PRIORITY          4
+#define ETM_CAN_AGILE_ID_HIGH               0
+#define ETM_CAN_AGILE_ID_LOW                36507
+#define ETM_CAN_AGILE_DASH                  0
+#define ETM_CAN_AGILE_REV                   'A'                   
+#define ETM_CAN_SERIAL_NUMBER               100 // DPARKER need to figure out how to set this in FLASH when programming
 #endif
 
 
