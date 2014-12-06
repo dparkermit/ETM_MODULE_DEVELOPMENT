@@ -11,7 +11,7 @@ unsigned char ConvertFromBCD(unsigned char decimal, unsigned char hour);
 
 unsigned char ConfigureDS3231(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK, unsigned char I2Cport, unsigned char config){
     ptr_REAL_TIME_CLOCK->control_register = config;
-    unsigned char status;
+    //unsigned char status;
     ptr_REAL_TIME_CLOCK->I2Cport = I2Cport;
 
     if (WaitForI2CBusIdle(ptr_REAL_TIME_CLOCK->I2Cport) == 0){
@@ -284,24 +284,46 @@ unsigned char ConvertToBCD(unsigned char decimal, unsigned char hour){
     }
     return bcd;
 }
+unsigned int ReadRTCTimeDifference(REAL_TIME_CLOCK* ptr_rtc_old, REAL_TIME_CLOCK* ptr_rtc_new) {
+    unsigned int seconds;
 
-unsigned char ResetRTCI2C(void) {
-    I2CCONbits.I2CEN = 0;
-    TRIS_I2C_SCL = 0;
-    TRIS_I2C_SDA = 1;
-    unsigned int counter;
-    counter = 0;
+    if (ptr_rtc_old->year == ptr_rtc_new->year) {
+        if (ptr_rtc_old->month == ptr_rtc_new->month) {
+            if (ptr_rtc_old->date == ptr_rtc_new->date) {
+                if (ptr_rtc_old->day == ptr_rtc_new->day) {
+                    seconds = (ptr_rtc_new->hour - ptr_rtc_old->hour);
+                    if (seconds > 17) //max integer 0xFFFF value
+                        return 0xFD20;
+                    else
+                        seconds *= 3600;
 
-    while (!PIN_I2C_SDA) {
-        counter++;
-        __delay32(100);
-        if (PIN_I2C_SCL)
-            PIN_I2C_SCL = 0;
+                    if (ptr_rtc_old->minute > ptr_rtc_new->minute)
+                        seconds -= (ptr_rtc_old->minute - ptr_rtc_new->minute) * 60;
+                    else
+                        seconds += (ptr_rtc_new->minute - ptr_rtc_old->minute) * 60;
+
+                    if (ptr_rtc_old->second > ptr_rtc_new->second)
+                        seconds -= (ptr_rtc_old->second - ptr_rtc_new->second);
+                    else
+                        seconds += (ptr_rtc_new->second - ptr_rtc_old->second);
+                           
+                    return seconds;
+                }
+                else
+                    seconds = 0xFD20;
+            }
+            else
+                seconds = 0xFD20;
+        }
         else
-            PIN_I2C_SCL = 1;
-        if (counter > 10000)
-            return 1;
+            seconds = 0xFD20;
     }
-    I2CCONbits.I2CEN = 1;
-    return 0;
+    else
+        seconds = 0xFD20;
+
+    if (seconds > 0xFD20)
+        seconds = 0xFFFF;
+
+    return seconds;
 }
+

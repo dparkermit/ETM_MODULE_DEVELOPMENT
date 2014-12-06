@@ -150,20 +150,19 @@ unsigned int ReadRTCTemperature(REAL_TIME_CLOCK* ptr_REAL_TIME_CLOCK);
 //  Return: This function will return an integer temperature in Celsius
 //
 
-unsigned char ResetRTCI2C(void);
-// Call this function if there is an I2C error.
-//  This function toggles SCL until SDA is high.
-//  Only after this can a start command be issued and received properly
-// This function does not reset the RTC I2C!!!!
-// The datasheet says that if I2C bus stops in the middle of a message
-// then this will clear the message and ready the IC for a new message
-// Unfortunately, this has not cleared the I2C for the IC in limited tests
+unsigned int ReadRTCTimeDifference(REAL_TIME_CLOCK* ptr_rtc_old, REAL_TIME_CLOCK* ptr_rtc_new);
+//
+//  Description: Call this function to calculate the difference
+//              of two REAL_TIME_CLOCK structures
+//              ptr_rtc_old must contain the older time stamp
+//              ptr_rtc_new must contain the current time
+//  Return: This function will return the difference in seconds of the two structures
+//              Maximum return is 0xFD20 (18 hours) to not overflow the integer
+//              If 0xFFFF is returned then there is an error
+//  Limitations: This function only evaluates the hours, minutes, and seconds
+//              All other values must be equal or the maximum value is returned
+//
 
-//Defined for reset function
-#define PIN_I2C_SCL     _LATG2
-#define TRIS_I2C_SCL    _TRISG2
-#define PIN_I2C_SDA     _LATG3
-#define TRIS_I2C_SDA    _TRISG3
 
 //These are the data addresses of the RTC module
 #define SECONDS_ADDRESS 0x00
